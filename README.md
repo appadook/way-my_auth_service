@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WAY Auth Service
 
-## Getting Started
+Standalone auth service for email/password authentication with JWT access tokens, refresh-token sessions, and JWKS publishing.
 
-First, run the development server:
+## Required Environment Variables
+
+Set these in `.env` (local) and Vercel project envs (production):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+DATABASE_URL=""
+DIRECT_URL=""
+UPSTASH_REDIS_REST_URL=""
+UPSTASH_REDIS_REST_TOKEN=""
+JWT_PRIVATE_KEY=""
+JWT_PUBLIC_KEY=""
+JWT_ISSUER=""
+JWT_AUDIENCE=""
+REFRESH_COOKIE_NAME="way_refresh"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Notes:
+- `DATABASE_URL`: pooled Neon URL (runtime)
+- `DIRECT_URL`: non-pooled Neon URL (migrations)
+- `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: PEM values (escaped `\n` supported). Raw base64 key bodies are also accepted and normalized to PEM at runtime.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+bun run prisma:migrate -- --name init_auth
+bun run prisma:generate
+bun run typecheck
+```
 
-## Learn More
+To run the app yourself:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+bun run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `POST /api/v1/signup`
+- `POST /api/v1/login`
+- `POST /api/v1/refresh`
+- `POST /api/v1/logout`
+- `GET /api/v1/jwks`
 
-## Deploy on Vercel
+## Browser Testing UI
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `GET /playground` provides a browser-based request runner for same-origin auth testing.
+- Includes editable method/path/headers/body, response inspection, and in-memory request history.
+- Includes one-click `Run Full Auth Scenario` to execute the full auth flow and log pass/fail per step.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Cookie Debug Probe (development only)
+
+- `GET /api/v1/_debug/cookie`
+- Returns:
+  - `cookieName`
+  - `present` (boolean)
+  - `checkedAt` (ISO timestamp)
+- Returns `404` outside development.
+
+Notes:
+- Browser JavaScript cannot read HttpOnly cookie values.
+- Browser JavaScript cannot read `Set-Cookie` response headers.
+- Use `/api/v1/_debug/cookie` to confirm whether the refresh cookie exists in dev.
