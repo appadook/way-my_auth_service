@@ -16,12 +16,14 @@ JWT_PUBLIC_KEY=""
 JWT_ISSUER=""
 JWT_AUDIENCE=""
 REFRESH_COOKIE_NAME="way_refresh"
+CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5174"
 ```
 
 Notes:
 - `DATABASE_URL`: pooled Neon URL (runtime)
 - `DIRECT_URL`: non-pooled Neon URL (migrations)
 - `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: PEM values (escaped `\n` supported). Raw base64 key bodies are also accepted and normalized to PEM at runtime.
+- `CORS_ALLOWED_ORIGINS`: comma-separated allowed browser origins for credentialed cross-origin API calls.
 
 ## Local Commands
 

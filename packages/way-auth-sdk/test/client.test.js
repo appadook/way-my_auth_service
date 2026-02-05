@@ -30,6 +30,23 @@ function createMockFetch(handlers) {
 }
 
 describe("createWayAuthClient", () => {
+  it("uses auth service base URL for me endpoint", async () => {
+    const mock = createMockFetch([
+      () =>
+        jsonResponse({
+          user: { id: "u_1", email: "demo@example.com" },
+        }),
+    ]);
+
+    const client = createWayAuthClient({
+      baseUrl: "https://auth.example.com",
+      fetch: mock.fetch,
+    });
+
+    await client.me();
+    expect(mock.calls[0].input).toBe("https://auth.example.com/api/v1/me");
+  });
+
   it("stores access token after login", async () => {
     const mock = createMockFetch([
       () =>
@@ -49,6 +66,19 @@ describe("createWayAuthClient", () => {
     await client.login({ email: "demo@example.com", password: "secret-password" });
     expect(await client.getAccessToken()).toBe("token_1");
     expect(mock.calls[0].input).toBe("https://auth.example.com/api/v1/login");
+  });
+
+  it("resolves relative fetchWithAuth URLs against auth base URL", async () => {
+    const mock = createMockFetch([() => jsonResponse({ user: { id: "u_1", email: "demo@example.com" } })]);
+
+    const client = createWayAuthClient({
+      baseUrl: "https://auth.example.com",
+      fetch: mock.fetch,
+    });
+
+    const response = await client.fetchWithAuth("/api/v1/me", { method: "GET" });
+    expect(response.status).toBe(200);
+    expect(mock.calls[0].input).toBe("https://auth.example.com/api/v1/me");
   });
 
   it("refreshes and retries once when protected request returns 401", async () => {
@@ -76,6 +106,22 @@ describe("createWayAuthClient", () => {
     expect(mock.calls[1].input).toBe("https://auth.example.com/api/v1/refresh");
   });
 
+  it("does not auto-refresh when request is already refresh endpoint", async () => {
+    const tokenStore = createInMemoryTokenStore("stale_token");
+    const mock = createMockFetch([() => jsonResponse({ error: { code: "invalid_token", message: "Expired." } }, 401)]);
+
+    const client = createWayAuthClient({
+      baseUrl: "https://auth.example.com",
+      fetch: mock.fetch,
+      tokenStore,
+    });
+
+    const response = await client.fetchWithAuth("/api/v1/refresh", { method: "POST" });
+    expect(response.status).toBe(401);
+    expect(mock.calls).toHaveLength(1);
+    expect(mock.calls[0].input).toBe("https://auth.example.com/api/v1/refresh");
+  });
+
   it("throws WayAuthApiError for non-ok auth responses", async () => {
     const mock = createMockFetch([
       () => jsonResponse({ error: { code: "invalid_credentials", message: "Invalid credentials." } }, 401),
@@ -91,4 +137,3 @@ describe("createWayAuthClient", () => {
     );
   });
 });
-

@@ -40,6 +40,15 @@ function joinUrl(baseUrl, path) {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${normalizedBaseUrl}${normalizedPath}`;
 }
+function normalizeComparableUrl(value) {
+    const parsed = new URL(value);
+    const normalizedPath = parsed.pathname.replace(/\/+$/, "") || "/";
+    return `${parsed.origin}${normalizedPath}`;
+}
+function resolveRequestUrl(baseUrl, input) {
+    const value = typeof input === "string" ? input : input.toString();
+    return joinUrl(baseUrl, value);
+}
 async function readErrorResponse(response) {
     const rawBody = await response.text();
     if (!rawBody) {
@@ -70,10 +79,16 @@ async function readErrorResponse(response) {
 async function readJsonResponse(response) {
     const rawBody = await response.text();
     if (!rawBody) {
+        if (response.status === 204 || response.status === 205) {
+            return undefined;
+        }
         throw new WayAuthApiError("Expected JSON response body.", {
             status: response.status,
             code: null,
-            details: null,
+            details: {
+                contentType: response.headers.get("content-type"),
+                bodyPreview: "",
+            },
         });
     }
     try {
@@ -83,7 +98,10 @@ async function readJsonResponse(response) {
         throw new WayAuthApiError("Response body was not valid JSON.", {
             status: response.status,
             code: null,
-            details: rawBody,
+            details: {
+                contentType: response.headers.get("content-type"),
+                bodyPreview: rawBody.slice(0, 300),
+            },
         });
     }
 }
@@ -147,7 +165,9 @@ export function createWayAuthClient(options) {
         return readJsonResponse(response);
     }
     async function fetchWithAuth(input, init = {}, requestOptions = {}) {
-        const url = typeof input === "string" ? input : input.toString();
+        const url = resolveRequestUrl(options.baseUrl, input);
+        const refreshUrl = joinUrl(options.baseUrl, endpoints.refresh);
+        const isRefreshRequest = normalizeComparableUrl(url) === normalizeComparableUrl(refreshUrl);
         const headers = new Headers(init.headers);
         const token = await getAccessToken();
         if (token) {
@@ -161,7 +181,7 @@ export function createWayAuthClient(options) {
         const canRetry = autoRefresh &&
             requestOptions.retryOn401 !== false &&
             response.status === 401 &&
-            !url.endsWith(endpoints.refresh);
+            !isRefreshRequest;
         if (!canRetry) {
             return response;
         }
