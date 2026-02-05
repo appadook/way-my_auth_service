@@ -99,6 +99,13 @@ const REQUEST_PRESETS: RequestPreset[] = [
     body: "",
   },
   {
+    id: "me",
+    label: "GET /api/v1/me",
+    method: "GET",
+    path: "/api/v1/me",
+    body: "",
+  },
+  {
     id: "jwks",
     label: "GET /api/v1/jwks",
     method: "GET",
@@ -141,6 +148,28 @@ function parseHeaders(text: string): { value: Record<string, string>; error: str
   return { value: headers, error: null };
 }
 
+function isMeRequest(method: HttpMethod, path: string): boolean {
+  const normalizedPath = path.split("?")[0]?.trim() ?? "";
+  return method === "GET" && normalizedPath.endsWith("/api/v1/me");
+}
+
+function extractAccessTokenFromResponse(response: ResponseSnapshot): string | null {
+  if (!response.parsedBody || typeof response.parsedBody !== "object") {
+    return null;
+  }
+
+  const parsed = response.parsedBody as Record<string, unknown>;
+  return typeof parsed.accessToken === "string" ? parsed.accessToken : null;
+}
+
+function maskToken(token: string): string {
+  if (token.length <= 20) {
+    return token;
+  }
+
+  return `${token.slice(0, 12)}...${token.slice(-8)}`;
+}
+
 export default function PlaygroundPage() {
   const initialPreset = REQUEST_PRESETS[0];
 
@@ -157,6 +186,8 @@ export default function PlaygroundPage() {
   const [cookieProbe, setCookieProbe] = useState<CookieProbeState>({ status: "idle" });
   const [isRunningScenario, setIsRunningScenario] = useState<boolean>(false);
   const [scenarioLog, setScenarioLog] = useState<ScenarioLogEntry[]>([]);
+  const [latestAccessToken, setLatestAccessToken] = useState<string | null>(null);
+  const [useLatestAccessTokenForMe, setUseLatestAccessTokenForMe] = useState<boolean>(true);
 
   function pushScenarioLog(entry: Omit<ScenarioLogEntry, "id" | "timestamp">) {
     setScenarioLog((previous) => [
@@ -179,6 +210,16 @@ export default function PlaygroundPage() {
       },
       ...previous,
     ]);
+
+    const latestToken = extractAccessTokenFromResponse(response);
+    if (latestToken) {
+      setLatestAccessToken(latestToken);
+    }
+
+    const normalizedPath = request.path.split("?")[0]?.trim() ?? "";
+    if (normalizedPath.endsWith("/api/v1/logout") && response.ok) {
+      setLatestAccessToken(null);
+    }
   }
 
   async function executeRequest(requestSnapshot: RequestSnapshot): Promise<ResponseSnapshot> {
@@ -320,10 +361,19 @@ export default function PlaygroundPage() {
       return;
     }
 
+    let nextHeadersText = headersText;
+    if (useLatestAccessTokenForMe && latestAccessToken && isMeRequest(method, path.trim())) {
+      const headersObject = { ...parsedHeaders.value, authorization: `Bearer ${latestAccessToken}` };
+      nextHeadersText = JSON.stringify(headersObject, null, 2);
+      if (nextHeadersText !== headersText) {
+        setHeadersText(nextHeadersText);
+      }
+    }
+
     const requestSnapshot: RequestSnapshot = {
       method,
       path: path.trim(),
-      headersText,
+      headersText: nextHeadersText,
       bodyText,
       credentials: credentialsMode,
     };
@@ -656,6 +706,23 @@ export default function PlaygroundPage() {
                   <option value="omit">omit</option>
                 </select>
               </label>
+            </div>
+
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={useLatestAccessTokenForMe}
+                  onChange={(event) => setUseLatestAccessTokenForMe(event.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Use latest access token for <span className="font-mono">GET /api/v1/me</span> requests
+                </span>
+              </label>
+              <p className="mt-2 font-mono text-[11px] text-slate-600">
+                {latestAccessToken ? `Latest token: ${maskToken(latestAccessToken)}` : "Latest token: (none yet)"}
+              </p>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-[170px_1fr]">

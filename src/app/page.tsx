@@ -7,6 +7,7 @@ export default function Home() {
     "POST /api/v1/login",
     "POST /api/v1/refresh",
     "POST /api/v1/logout",
+    "GET /api/v1/me",
     "GET /api/v1/jwks",
   ];
 

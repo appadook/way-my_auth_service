@@ -9,7 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "sdk:build": "bun run --cwd packages/way-auth-sdk build",
+    "sdk:test": "bun run --cwd packages/way-auth-sdk test"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",

@@ -43,6 +43,7 @@ bun run dev
 - `POST /api/v1/login`
 - `POST /api/v1/refresh`
 - `POST /api/v1/logout`
+- `GET /api/v1/me`
 - `GET /api/v1/jwks`
 
 ## Browser Testing UI
@@ -64,3 +65,16 @@ Notes:
 - Browser JavaScript cannot read HttpOnly cookie values.
 - Browser JavaScript cannot read `Set-Cookie` response headers.
 - Use `/api/v1/_debug/cookie` to confirm whether the refresh cookie exists in dev.
+
+## Local SDK
+
+This repo includes a local TypeScript SDK at `packages/way-auth-sdk` with:
+- client helpers (`createWayAuthClient`)
+- server verification helpers (`createWayAuthGuard`, `createWayAuthVerifier`)
+- frontend state wrappers (`createWayAuthState`) and React hooks (`@way/auth-sdk/react`)
+
+Install in another local project without publishing:
+
+```bash
+bun add ../way-my_auth_service/packages/way-auth-sdk
+```
