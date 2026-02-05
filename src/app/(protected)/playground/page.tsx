@@ -171,6 +171,17 @@ function maskToken(token: string): string {
   return `${token.slice(0, 12)}...${token.slice(-8)}`;
 }
 
+function StatusBadge({ status, ok }: { status: number; ok: boolean }) {
+  const color = ok
+    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+    : "bg-red-500/10 text-red-300 border-red-500/20";
+  return (
+    <span className={`rounded-md border px-2 py-0.5 font-mono text-xs font-bold ${color}`}>
+      {status}
+    </span>
+  );
+}
+
 export default function PlaygroundPage() {
   const initialPreset = REQUEST_PRESETS[0];
 
@@ -650,82 +661,78 @@ export default function PlaygroundPage() {
     }
   }
 
+  const selectClass =
+    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-[#9fdd58]/40";
+  const inputClass =
+    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-[#9fdd58]/40";
+  const textareaClass =
+    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 p-3 font-mono text-xs text-slate-200 outline-none transition focus:border-[#9fdd58]/40";
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(159,221,88,0.18)_0%,_rgba(58,95,149,0.28)_40%,_#08101a_88%)] p-6 text-slate-100">
-      <main className="mx-auto max-w-7xl space-y-6">
-        <nav className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-500/45 bg-slate-900/60 px-5 py-3 shadow-sm">
+    <div className="min-h-screen px-5 py-8 text-slate-100 md:px-8 md:py-10">
+      <main className="mx-auto max-w-7xl space-y-5">
+        {/* ── Nav ── */}
+        <nav className="animate-fade-in-up glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3">
           <div className="flex items-center gap-3">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={40} height={40} className="h-10 w-10" />
+            <Image src="/way-asset-logo.png" alt="WAY Auth" width={36} height={36} className="h-9 w-9" />
             <div>
-              <p className="text-xs uppercase text-slate-300">WAY Auth Service</p>
-              <p className="font-display text-lg">API Playground</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">WAY Auth</p>
+              <p className="font-display text-base tracking-wide">API Playground</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <Link
               href="/"
-              className="rounded-lg border border-slate-300/25 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#9fdd58]/55"
+              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
             >
-              Landing
+              Home
+            </Link>
+            <Link
+              href="/docs"
+              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
+            >
+              Docs
             </Link>
             <Link
               href="/playground"
-              className="rounded-lg border border-[#9fdd58]/55 bg-[#9fdd58]/15 px-3 py-2 text-xs font-semibold text-slate-100"
+              className="rounded-lg border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-2 text-xs font-semibold text-[#c8ef97]"
             >
               Playground
             </Link>
             <Link
               href="/admin/cors"
-              className="rounded-lg border border-slate-300/25 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#9fdd58]/55"
+              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
             >
               CORS Admin
             </Link>
           </div>
         </nav>
-        <section className="rounded-3xl border border-slate-500/45 bg-[linear-gradient(150deg,rgba(10,20,33,0.95),rgba(20,34,58,0.86))] p-6 shadow-[0_18px_48px_rgba(2,6,23,0.42)] backdrop-blur">
-          <div className="grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <Image
-                src="/way-asset-logo.png"
-                alt="WAY Auth shield logo"
-                width={405}
-                height={370}
-                className="mt-4 h-auto w-24 md:w-28"
-                priority
-              />
-              <h1 className="font-display mt-4 text-2xl tracking-tight md:text-3xl">API Playground</h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-200/90">
-                Same-origin browser tester for auth routes. Use this to validate real browser cookie behavior, request
-                payloads, and response contracts before wiring client apps.
-              </p>
-            </div>
 
-            <div className="rounded-2xl border border-slate-400/25 bg-slate-900/45 p-3">
-              <Image
-                src="/way-asset-marketing-1.png"
-                alt="JWT security visual"
-                width={607}
-                height={313}
-                className="h-auto w-full"
-              />
-            </div>
-          </div>
-          <p className="mt-4 rounded-lg border border-amber-200/30 bg-amber-100/90 p-3 text-sm text-amber-950">
-            `Set-Cookie` headers and HttpOnly cookie values are intentionally hidden from browser JavaScript. Use the
-            cookie probe to verify whether the refresh cookie is present.
-          </p>
-        </section>
+        {/* ── Notice bar ── */}
+        <div className="animate-fade-in-up delay-100 flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/80">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-xs">
+            <span className="font-mono">Set-Cookie</span> headers and HttpOnly cookie values are hidden from JavaScript.
+            Use the cookie probe below to verify refresh cookie presence.
+          </span>
+        </div>
 
-        <div className="grid gap-6 lg:grid-cols-12">
-          <section className="rounded-2xl border border-slate-300/60 bg-white/90 p-5 text-slate-900 shadow-sm lg:col-span-7">
-            <h2 className="font-display text-lg font-semibold">Request Composer</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 text-sm">
-                <span className="font-medium">Preset</span>
+        {/* ── Main grid ── */}
+        <div className="grid gap-5 lg:grid-cols-12">
+          {/* ── Request composer ── */}
+          <section className="animate-fade-in-up delay-200 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5 lg:col-span-7">
+            <h2 className="font-display text-lg tracking-wide text-slate-100">Request Composer</h2>
+
+            {/* Preset + credentials row */}
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <label className="space-y-1.5 text-xs">
+                <span className="font-medium uppercase tracking-wider text-slate-400">Preset</span>
                 <select
                   value={selectedPresetId}
                   onChange={(event) => applyPreset(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                  className={selectClass}
                 >
                   {REQUEST_PRESETS.map((preset) => (
                     <option key={preset.id} value={preset.id}>
@@ -736,12 +743,12 @@ export default function PlaygroundPage() {
                 </select>
               </label>
 
-              <label className="space-y-2 text-sm">
-                <span className="font-medium">Credentials</span>
+              <label className="space-y-1.5 text-xs">
+                <span className="font-medium uppercase tracking-wider text-slate-400">Credentials</span>
                 <select
                   value={credentialsMode}
                   onChange={(event) => setCredentialsMode(event.target.value as CredentialsMode)}
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                  className={selectClass}
                 >
                   <option value="same-origin">same-origin</option>
                   <option value="include">include</option>
@@ -750,30 +757,32 @@ export default function PlaygroundPage() {
               </label>
             </div>
 
-            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            {/* Auto token injection */}
+            <div className="mt-3 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs text-slate-400">
               <label className="flex items-start gap-2">
                 <input
                   type="checkbox"
                   checked={useLatestAccessTokenForMe}
                   onChange={(event) => setUseLatestAccessTokenForMe(event.target.checked)}
-                  className="mt-0.5"
+                  className="mt-0.5 accent-[#9fdd58]"
                 />
                 <span>
-                  Use latest access token for <span className="font-mono">GET /api/v1/me</span> requests
+                  Auto-inject latest access token for <span className="font-mono text-slate-300">GET /api/v1/me</span>
                 </span>
               </label>
-              <p className="mt-2 font-mono text-[11px] text-slate-600">
-                {latestAccessToken ? `Latest token: ${maskToken(latestAccessToken)}` : "Latest token: (none yet)"}
+              <p className="mt-1.5 font-mono text-[11px] text-slate-500">
+                {latestAccessToken ? `Token: ${maskToken(latestAccessToken)}` : "No token captured yet"}
               </p>
             </div>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-[170px_1fr]">
-              <label className="space-y-2 text-sm">
-                <span className="font-medium">Method</span>
+            {/* Method + path */}
+            <div className="mt-4 grid gap-3 md:grid-cols-[160px_1fr]">
+              <label className="space-y-1.5 text-xs">
+                <span className="font-medium uppercase tracking-wider text-slate-400">Method</span>
                 <select
                   value={method}
                   onChange={(event) => setMethod(event.target.value as HttpMethod)}
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                  className={selectClass}
                 >
                   <option value="GET">GET</option>
                   <option value="POST">POST</option>
@@ -783,53 +792,55 @@ export default function PlaygroundPage() {
                 </select>
               </label>
 
-              <label className="space-y-2 text-sm">
-                <span className="font-medium">Path</span>
+              <label className="space-y-1.5 text-xs">
+                <span className="font-medium uppercase tracking-wider text-slate-400">Path</span>
                 <input
                   value={path}
                   onChange={(event) => setPath(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                  className={inputClass}
                   placeholder="/api/v1/signup"
                 />
-                {validationErrors.path && <p className="text-xs text-red-700">{validationErrors.path}</p>}
+                {validationErrors.path && <p className="text-red-400">{validationErrors.path}</p>}
               </label>
             </div>
 
-            <label className="mt-4 block space-y-2 text-sm">
-              <span className="font-medium">Headers (JSON object)</span>
+            {/* Headers */}
+            <label className="mt-4 block space-y-1.5 text-xs">
+              <span className="font-medium uppercase tracking-wider text-slate-400">Headers (JSON)</span>
               <textarea
                 value={headersText}
                 onChange={(event) => setHeadersText(event.target.value)}
-                className="h-36 w-full rounded-lg border border-slate-300 bg-slate-950 p-3 font-mono text-xs text-slate-100"
+                className={`h-32 ${textareaClass}`}
                 spellCheck={false}
               />
-              {validationErrors.headers && <p className="text-xs text-red-700">{validationErrors.headers}</p>}
+              {validationErrors.headers && <p className="text-red-400">{validationErrors.headers}</p>}
               {selectedPresetId === "signup" && (
-                <p className="text-xs text-slate-600">
-                  If signup is restricted, include{" "}
-                  <span className="font-mono">{`"${SIGNUP_SECRET_HEADER}": "your-secret"`}</span>.
+                <p className="text-slate-500">
+                  Include <span className="font-mono text-slate-400">{`"${SIGNUP_SECRET_HEADER}": "your-secret"`}</span> if signup is restricted.
                 </p>
               )}
             </label>
 
-            <label className="mt-4 block space-y-2 text-sm">
-              <span className="font-medium">Body (JSON)</span>
+            {/* Body */}
+            <label className="mt-4 block space-y-1.5 text-xs">
+              <span className="font-medium uppercase tracking-wider text-slate-400">Body (JSON)</span>
               <textarea
                 value={bodyText}
                 onChange={(event) => setBodyText(event.target.value)}
-                className="h-44 w-full rounded-lg border border-slate-300 bg-slate-950 p-3 font-mono text-xs text-slate-100"
+                className={`h-40 ${textareaClass}`}
                 spellCheck={false}
-                placeholder={methodSupportsBody(method) ? "{\n  \"key\": \"value\"\n}" : "Method does not use body"}
+                placeholder={methodSupportsBody(method) ? '{\n  "key": "value"\n}' : "Method does not use body"}
               />
-              {validationErrors.body && <p className="text-xs text-red-700">{validationErrors.body}</p>}
+              {validationErrors.body && <p className="text-red-400">{validationErrors.body}</p>}
             </label>
 
-            <div className="mt-5 flex flex-wrap gap-3">
+            {/* Action buttons */}
+            <div className="mt-5 flex flex-wrap gap-2.5">
               <button
                 type="button"
                 onClick={handleSendRequest}
                 disabled={isSending || isRunningScenario}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-[#9fdd58] px-5 py-2.5 text-sm font-semibold text-[#07101c] transition hover:bg-[#8ed14c] hover:shadow-[0_0_20px_rgba(159,221,88,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSending ? "Sending..." : "Send Request"}
               </button>
@@ -837,53 +848,65 @@ export default function PlaygroundPage() {
                 type="button"
                 onClick={checkCookiePresence}
                 disabled={isRunningScenario}
-                className="rounded-lg border border-slate-400 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900"
+                className="rounded-lg border border-slate-500/30 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-400/40 hover:bg-white/[0.07]"
               >
-                Check Refresh Cookie Presence
+                Check Cookie
               </button>
               <button
                 type="button"
                 onClick={runFullAuthScenario}
                 disabled={isSending || isRunningScenario}
-                className="rounded-lg border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-900 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-emerald-500/25 bg-emerald-500/8 px-4 py-2.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isRunningScenario ? "Running Scenario..." : "Run Full Auth Scenario"}
+                {isRunningScenario ? "Running..." : "Full Auth Scenario"}
               </button>
             </div>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-              <p className="font-display font-semibold">Cookie Probe</p>
-              {cookieProbe.status === "idle" && <p className="mt-1">No probe run yet.</p>}
-              {cookieProbe.status === "loading" && <p className="mt-1">Checking cookie presence...</p>}
-              {cookieProbe.status === "error" && <p className="mt-1 text-red-700">{cookieProbe.message}</p>}
+            {/* Cookie probe result */}
+            <div className="mt-4 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs">
+              <p className="font-medium text-slate-300">Cookie Probe</p>
+              {cookieProbe.status === "idle" && <p className="mt-1 text-slate-500">No probe run yet.</p>}
+              {cookieProbe.status === "loading" && (
+                <p className="mt-1 text-slate-400">Checking...</p>
+              )}
+              {cookieProbe.status === "error" && <p className="mt-1 text-red-400">{cookieProbe.message}</p>}
               {cookieProbe.status === "success" && (
-                <pre className="mt-2 overflow-x-auto rounded-md bg-slate-900 p-2 text-[11px] text-slate-100">
+                <pre className="code-block mt-2 !p-2 !text-[11px]">
                   {JSON.stringify(cookieProbe.payload, null, 2)}
                 </pre>
               )}
             </div>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-              <p className="font-display font-semibold">One-Click Full Scenario</p>
-              <p className="mt-1">
-                Runs signup, cookie check, refresh x2, logout, cookie check, refresh fail, login, and cookie check.
+            {/* Scenario runner */}
+            <div className="mt-4 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs">
+              <p className="font-medium text-slate-300">Full Scenario</p>
+              <p className="mt-1 text-slate-500">
+                Signup, cookie check, refresh x2, logout, cookie check, refresh fail, login, cookie check.
               </p>
-              <p className="mt-1">Uses a generated test email and `same-origin` credentials.</p>
-              {scenarioLog.length === 0 && <p className="mt-2">No scenario run yet.</p>}
+              {scenarioLog.length === 0 && <p className="mt-2 text-slate-500">No scenario run yet.</p>}
               {scenarioLog.length > 0 && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-1.5">
                   {scenarioLog.map((entry) => (
                     <div
                       key={entry.id}
-                      className={`rounded-md border p-2 ${
-                        entry.status === "pass" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                      className={`rounded-lg border p-2.5 ${
+                        entry.status === "pass"
+                          ? "border-emerald-500/15 bg-emerald-500/5"
+                          : "border-red-500/15 bg-red-500/5"
                       }`}
                     >
-                      <p className="font-semibold">
-                        {entry.status === "pass" ? "PASS" : "FAIL"} - {entry.name}
+                      <p className="font-medium">
+                        <span
+                          className={`mr-1.5 font-mono text-[11px] font-bold ${
+                            entry.status === "pass" ? "text-emerald-400" : "text-red-400"
+                          }`}
+                        >
+                          {entry.status === "pass" ? "PASS" : "FAIL"}
+                        </span>
+                        <span className="text-slate-300">{entry.name}</span>
                       </p>
-                      <p className="mt-1">{entry.detail}</p>
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-slate-400">{entry.detail}</p>
+                      <p className="mt-1 text-[11px] text-slate-600">
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
@@ -893,93 +916,92 @@ export default function PlaygroundPage() {
             </div>
           </section>
 
-          <section className="space-y-6 lg:col-span-5">
-            <article className="rounded-2xl border border-slate-300/60 bg-white/90 p-5 text-slate-900 shadow-sm">
-              <h2 className="font-display text-lg font-semibold">Latest Response</h2>
-              {!currentResponse && <p className="mt-3 text-sm text-slate-600">No response yet.</p>}
+          {/* ── Response + History ── */}
+          <section className="space-y-5 lg:col-span-5">
+            {/* Latest response */}
+            <article className="animate-fade-in-up delay-300 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5">
+              <h2 className="font-display text-lg tracking-wide text-slate-100">Response</h2>
+              {!currentResponse && <p className="mt-3 text-sm text-slate-500">No response yet.</p>}
               {currentResponse && (
                 <div className="mt-3 space-y-3 text-sm">
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                      <p className="text-slate-500">Status</p>
-                      <p className="font-semibold">{currentResponse.status}</p>
+                  {/* Status grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                    <div className="rounded-lg border border-slate-700/20 bg-slate-950/30 p-2.5">
+                      <p className="text-[11px] text-slate-500">Status</p>
+                      <div className="mt-1">
+                        <StatusBadge status={currentResponse.status} ok={currentResponse.ok} />
+                      </div>
                     </div>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                      <p className="text-slate-500">OK</p>
-                      <p className="font-semibold">{String(currentResponse.ok)}</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                      <p className="text-slate-500">Duration</p>
-                      <p className="font-semibold">{currentResponse.durationMs} ms</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-                      <p className="text-slate-500">Timestamp</p>
-                      <p className="font-semibold">{new Date(currentResponse.timestamp).toLocaleTimeString()}</p>
+                    <div className="rounded-lg border border-slate-700/20 bg-slate-950/30 p-2.5">
+                      <p className="text-[11px] text-slate-500">Duration</p>
+                      <p className="mt-1 font-mono font-semibold text-slate-200">{currentResponse.durationMs} ms</p>
                     </div>
                   </div>
 
                   {currentResponse.networkError && (
-                    <p className="rounded-md border border-red-200 bg-red-50 p-2 text-red-700">
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-xs text-red-300">
                       Network error: {currentResponse.networkError}
-                    </p>
+                    </div>
                   )}
 
+                  {/* Response headers */}
                   <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Response Headers</p>
-                    <pre className="max-h-44 overflow-auto rounded-md bg-slate-900 p-3 font-mono text-[11px] text-slate-100">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Headers</p>
+                    <pre className="code-block max-h-36 !text-[11px]">
                       {JSON.stringify(currentResponse.headers, null, 2)}
                     </pre>
                   </div>
 
+                  {/* Response body */}
                   <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Response JSON</p>
-                    <pre className="max-h-44 overflow-auto rounded-md bg-slate-900 p-3 font-mono text-[11px] text-slate-100">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Body</p>
+                    <pre className="code-block max-h-44 !text-[11px]">
                       {currentResponse.parsedBody !== null
                         ? JSON.stringify(currentResponse.parsedBody, null, 2)
-                        : "No JSON body parsed."}
+                        : currentResponse.rawBody || "(empty)"}
                     </pre>
-                    {currentResponse.parseError && <p className="mt-1 text-xs text-amber-700">{currentResponse.parseError}</p>}
-                  </div>
-
-                  <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Raw Body</p>
-                    <pre className="max-h-44 overflow-auto rounded-md bg-slate-900 p-3 font-mono text-[11px] text-slate-100">
-                      {currentResponse.rawBody || "(empty)"}
-                    </pre>
+                    {currentResponse.parseError && (
+                      <p className="mt-1 text-[11px] text-amber-400">{currentResponse.parseError}</p>
+                    )}
                   </div>
                 </div>
               )}
             </article>
 
-            <article className="rounded-2xl border border-slate-300/60 bg-white/90 p-5 text-slate-900 shadow-sm">
-              <h2 className="font-display text-lg font-semibold">Request History</h2>
-              {requestHistory.length === 0 && <p className="mt-3 text-sm text-slate-600">No requests yet.</p>}
-              <div className="mt-3 space-y-3">
+            {/* Request history */}
+            <article className="animate-fade-in-up delay-400 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5">
+              <h2 className="font-display text-lg tracking-wide text-slate-100">History</h2>
+              {requestHistory.length === 0 && <p className="mt-3 text-sm text-slate-500">No requests yet.</p>}
+              <div className="mt-3 space-y-2">
                 {requestHistory.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div key={item.id} className="rounded-lg border border-slate-700/15 bg-slate-950/25 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-mono text-xs font-semibold">
-                        {item.request.method} {item.request.path}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={item.response.status} ok={item.response.ok} />
+                        <span className="font-mono text-xs text-slate-300">
+                          {item.request.method} {item.request.path}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => loadHistoryItem(item)}
-                        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold"
+                        className="rounded-md border border-slate-600/25 bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-400 transition hover:text-slate-200"
                       >
-                        Load Into Editor
+                        Load
                       </button>
                     </div>
-                    <p className="mt-1 text-xs text-slate-600">
-                      Status {item.response.status} | {item.response.durationMs} ms |{" "}
-                      {new Date(item.response.timestamp).toLocaleTimeString()}
+                    <p className="mt-1.5 text-[11px] text-slate-500">
+                      {item.response.durationMs} ms &middot; {new Date(item.response.timestamp).toLocaleTimeString()}
                     </p>
                     <details className="mt-2 text-xs">
-                      <summary className="cursor-pointer font-medium text-slate-700">View snapshots</summary>
+                      <summary className="cursor-pointer font-medium text-slate-400 transition hover:text-slate-200">
+                        View details
+                      </summary>
                       <div className="mt-2 grid gap-2">
-                        <pre className="max-h-36 overflow-auto rounded-md bg-slate-900 p-2 font-mono text-[11px] text-slate-100">
+                        <pre className="code-block max-h-32 !text-[11px]">
                           {JSON.stringify(item.request, null, 2)}
                         </pre>
-                        <pre className="max-h-36 overflow-auto rounded-md bg-slate-900 p-2 font-mono text-[11px] text-slate-100">
+                        <pre className="code-block max-h-32 !text-[11px]">
                           {JSON.stringify(item.response, null, 2)}
                         </pre>
                       </div>

@@ -26,8 +26,8 @@
 
 body {
   background:
-    radial-gradient(1300px 420px at 12% -10%, rgba(159, 221, 88, 0.2), transparent 60%),
-    radial-gradient(1200px 500px at 90% 0%, rgba(58, 95, 149, 0.35), transparent 58%),
+    radial-gradient(1300px 420px at 12% -10%, rgba(159, 221, 88, 0.15), transparent 60%),
+    radial-gradient(1200px 500px at 90% 0%, rgba(58, 95, 149, 0.3), transparent 58%),
     linear-gradient(180deg, #0b1422 0%, #08101a 52%, #0c1a2e 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -37,4 +37,205 @@ body {
 .font-display {
   font-family: var(--font-display), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.01em;
+}
+
+/* ── Animations ── */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(159, 221, 88, 0.15); }
+  50% { border-color: rgba(159, 221, 88, 0.4); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-border-glow {
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+/* Staggered delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+
+/* ── Glass surfaces ── */
+
+.glass {
+  background: rgba(15, 23, 41, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.glass-strong {
+  background: rgba(15, 23, 41, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 41, 0.7),
+    rgba(21, 36, 61, 0.5)
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* ── Glow effects ── */
+
+.glow-green {
+  box-shadow:
+    0 0 20px rgba(159, 221, 88, 0.08),
+    0 0 60px rgba(159, 221, 88, 0.04);
+}
+
+.glow-green-strong {
+  box-shadow:
+    0 0 30px rgba(159, 221, 88, 0.15),
+    0 0 80px rgba(159, 221, 88, 0.06);
+}
+
+.glow-blue {
+  box-shadow:
+    0 0 30px rgba(58, 95, 149, 0.12),
+    0 0 80px rgba(58, 95, 149, 0.06);
+}
+
+/* ── Noise texture overlay ── */
+
+.noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* ── Shimmer loading bar ── */
+
+.shimmer-bar {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(159, 221, 88, 0.15) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.35);
+}
+
+/* ── Focus ring ── */
+
+:focus-visible {
+  outline: 2px solid rgba(159, 221, 88, 0.5);
+  outline-offset: 2px;
+}
+
+/* ── Code blocks ── */
+
+.code-block {
+  background: linear-gradient(
+    160deg,
+    rgba(8, 16, 26, 0.95),
+    rgba(15, 23, 41, 0.9)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+/* ── Selection ── */
+
+::selection {
+  background: rgba(159, 221, 88, 0.25);
+  color: #eff6ff;
 }
