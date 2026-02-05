@@ -6,6 +6,7 @@ const DEFAULT_ENDPOINTS = {
     me: "/api/v1/me",
     jwks: "/api/v1/jwks",
 };
+const SIGNUP_SECRET_HEADER = "x-way-signup-secret";
 export class WayAuthApiError extends Error {
     status;
     code;
@@ -110,6 +111,7 @@ export function createWayAuthClient(options) {
     const credentials = options.credentials ?? "include";
     const autoRefresh = options.autoRefresh ?? true;
     const tokenStore = options.tokenStore ?? createInMemoryTokenStore();
+    const signupSecret = options.signupSecret?.trim() || null;
     const endpoints = {
         ...DEFAULT_ENDPOINTS,
         ...options.endpoints,
@@ -120,11 +122,15 @@ export function createWayAuthClient(options) {
     async function setAccessToken(token) {
         await tokenStore.setAccessToken(token);
     }
-    async function requestAuthJson(method, path, body) {
+    async function requestAuthJson(method, path, body, headers) {
+        const requestHeaders = new Headers(headers);
+        if (body !== undefined && !requestHeaders.has("content-type")) {
+            requestHeaders.set("content-type", "application/json");
+        }
         const response = await fetchImpl(joinUrl(options.baseUrl, path), {
             method,
             credentials,
-            headers: body === undefined ? undefined : { "content-type": "application/json" },
+            headers: requestHeaders,
             body: body === undefined ? undefined : JSON.stringify(body),
         });
         if (!response.ok) {
@@ -133,7 +139,8 @@ export function createWayAuthClient(options) {
         return readJsonResponse(response);
     }
     async function signup(input) {
-        const result = await requestAuthJson("POST", endpoints.signup, input);
+        const signupHeaders = signupSecret ? { [SIGNUP_SECRET_HEADER]: signupSecret } : undefined;
+        const result = await requestAuthJson("POST", endpoints.signup, input, signupHeaders);
         await setAccessToken(result.accessToken);
         return result;
     }

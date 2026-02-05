@@ -11,7 +11,8 @@ const envSchema = z.object({
   JWT_ISSUER: z.string().min(1),
   JWT_AUDIENCE: z.string().min(1),
   REFRESH_COOKIE_NAME: z.string().min(1),
-  CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:3000"),
+  ADMIN_EMAILS: z.string().default(""),
+  SIGNUP_SECRET: z.string().default(""),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

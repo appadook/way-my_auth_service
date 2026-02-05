@@ -18,7 +18,7 @@ export function setRefreshTokenCookie(
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api/v1",
+    path: "/",
     maxAge,
   });
 }
@@ -30,8 +30,7 @@ export function clearRefreshTokenCookie(response: NextResponse): void {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api/v1",
+    path: "/",
     maxAge: 0,
   });
 }
-

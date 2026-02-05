@@ -68,6 +68,7 @@ type ScenarioLogEntry = {
 };
 
 const CUSTOM_PRESET_ID = "__custom__";
+const SIGNUP_SECRET_HEADER = "x-way-signup-secret";
 
 const REQUEST_PRESETS: RequestPreset[] = [
   {
@@ -483,7 +484,25 @@ export default function PlaygroundPage() {
     const scenarioEmail = `playground+${Date.now()}@example.com`;
     const scenarioPassword = "StrongPass123!";
 
-    const scenarioHeaders = JSON.stringify({ "content-type": "application/json" }, null, 2);
+    const scenarioHeaderParse = parseHeaders(headersText);
+    if (scenarioHeaderParse.error) {
+      pushScenarioLog({
+        name: "Scenario setup",
+        status: "fail",
+        detail: scenarioHeaderParse.error,
+      });
+      setIsRunningScenario(false);
+      return;
+    }
+
+    const scenarioSignupSecret = scenarioHeaderParse.value[SIGNUP_SECRET_HEADER];
+    const scenarioHeaders = JSON.stringify(
+      scenarioSignupSecret
+        ? { "content-type": "application/json", [SIGNUP_SECRET_HEADER]: scenarioSignupSecret }
+        : { "content-type": "application/json" },
+      null,
+      2,
+    );
 
     const runRequestStep = async (
       name: string,
@@ -634,15 +653,38 @@ export default function PlaygroundPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(159,221,88,0.18)_0%,_rgba(58,95,149,0.28)_40%,_#08101a_88%)] p-6 text-slate-100">
       <main className="mx-auto max-w-7xl space-y-6">
+        <nav className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-500/45 bg-slate-900/60 px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Image src="/way-asset-logo.png" alt="WAY Auth" width={40} height={40} className="h-10 w-10" />
+            <div>
+              <p className="text-xs uppercase text-slate-300">WAY Auth Service</p>
+              <p className="font-display text-lg">API Playground</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/"
+              className="rounded-lg border border-slate-300/25 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#9fdd58]/55"
+            >
+              Landing
+            </Link>
+            <Link
+              href="/playground"
+              className="rounded-lg border border-[#9fdd58]/55 bg-[#9fdd58]/15 px-3 py-2 text-xs font-semibold text-slate-100"
+            >
+              Playground
+            </Link>
+            <Link
+              href="/admin/cors"
+              className="rounded-lg border border-slate-300/25 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#9fdd58]/55"
+            >
+              CORS Admin
+            </Link>
+          </div>
+        </nav>
         <section className="rounded-3xl border border-slate-500/45 bg-[linear-gradient(150deg,rgba(10,20,33,0.95),rgba(20,34,58,0.86))] p-6 shadow-[0_18px_48px_rgba(2,6,23,0.42)] backdrop-blur">
           <div className="grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <Link
-                href="/"
-                className="inline-flex items-center rounded-lg border border-slate-300/25 bg-slate-900/40 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-[#9fdd58]/55"
-              >
-                Back To Service Home
-              </Link>
               <Image
                 src="/way-asset-logo.png"
                 alt="WAY Auth shield logo"
@@ -762,6 +804,12 @@ export default function PlaygroundPage() {
                 spellCheck={false}
               />
               {validationErrors.headers && <p className="text-xs text-red-700">{validationErrors.headers}</p>}
+              {selectedPresetId === "signup" && (
+                <p className="text-xs text-slate-600">
+                  If signup is restricted, include{" "}
+                  <span className="font-mono">{`"${SIGNUP_SECRET_HEADER}": "your-secret"`}</span>.
+                </p>
+              )}
             </label>
 
             <label className="mt-4 block space-y-2 text-sm">

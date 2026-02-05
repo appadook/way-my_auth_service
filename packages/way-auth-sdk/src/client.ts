@@ -18,6 +18,7 @@ const DEFAULT_ENDPOINTS: WayAuthEndpoints = {
   me: "/api/v1/me",
   jwks: "/api/v1/jwks",
 };
+const SIGNUP_SECRET_HEADER = "x-way-signup-secret";
 
 type JsonMethod = "GET" | "POST";
 
@@ -32,6 +33,7 @@ export type WayAuthClientOptions = {
   autoRefresh?: boolean;
   tokenStore?: AccessTokenStore;
   endpoints?: Partial<WayAuthEndpoints>;
+  signupSecret?: string;
 };
 
 export class WayAuthApiError extends Error {
@@ -153,6 +155,7 @@ export function createWayAuthClient(options: WayAuthClientOptions) {
   const credentials = options.credentials ?? "include";
   const autoRefresh = options.autoRefresh ?? true;
   const tokenStore = options.tokenStore ?? createInMemoryTokenStore();
+  const signupSecret = options.signupSecret?.trim() || null;
   const endpoints: WayAuthEndpoints = {
     ...DEFAULT_ENDPOINTS,
     ...options.endpoints,
@@ -166,11 +169,21 @@ export function createWayAuthClient(options: WayAuthClientOptions) {
     await tokenStore.setAccessToken(token);
   }
 
-  async function requestAuthJson<T>(method: JsonMethod, path: string, body?: unknown): Promise<T> {
+  async function requestAuthJson<T>(
+    method: JsonMethod,
+    path: string,
+    body?: unknown,
+    headers?: HeadersInit,
+  ): Promise<T> {
+    const requestHeaders = new Headers(headers);
+    if (body !== undefined && !requestHeaders.has("content-type")) {
+      requestHeaders.set("content-type", "application/json");
+    }
+
     const response = await fetchImpl(joinUrl(options.baseUrl, path), {
       method,
       credentials,
-      headers: body === undefined ? undefined : { "content-type": "application/json" },
+      headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
 
@@ -182,7 +195,8 @@ export function createWayAuthClient(options: WayAuthClientOptions) {
   }
 
   async function signup(input: WayAuthCredentialInput): Promise<WayAuthSignupResponse> {
-    const result = await requestAuthJson<WayAuthSignupResponse>("POST", endpoints.signup, input);
+    const signupHeaders = signupSecret ? { [SIGNUP_SECRET_HEADER]: signupSecret } : undefined;
+    const result = await requestAuthJson<WayAuthSignupResponse>("POST", endpoints.signup, input, signupHeaders);
     await setAccessToken(result.accessToken);
     return result;
   }

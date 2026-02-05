@@ -6,6 +6,7 @@ This guide explains how to integrate the WAY Auth Service + SDK across frontend 
 
 - **Access tokens** are short-lived JWTs used in `Authorization: Bearer <token>` for protected calls.
 - **Refresh tokens** are HttpOnly cookies (never readable in JS). Refreshing happens by calling `/api/v1/refresh` with `credentials: "include"`.
+- Refresh cookies are scoped to `/` so protected page routes can validate sessions on the server.
 - The SDK stores the **access token in memory** and automatically refreshes once on a 401 (then retries the original call).
 - **`/me` is the canonical identity hydration endpoint**. It is the safe way to confirm the current user from a token.
 
@@ -49,13 +50,14 @@ The SDK expects these endpoints:
 
 If your frontend runs on a different origin than the auth service, you must allow credentialed CORS.
 
-- Set `CORS_ALLOWED_ORIGINS` in the auth service `.env` (comma-separated).
+- Use `/admin/cors` in the auth service to add or remove allowed origins.
+- Set `ADMIN_EMAILS` in the auth service `.env` so you can access the admin UI.
 - Always send `credentials: "include"` for login/refresh/logout.
 
 Example:
 
 ```bash
-CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5174"
+ADMIN_EMAILS="admin@example.com"
 ```
 
 ## 4. SDK Client (Browser or Node)
@@ -184,7 +186,13 @@ const auth = await requireAuth(request);
 // auth.sub is the user id
 ```
 
-## 8. Convex (Server Auth Verification)
+## 8. Protecting Pages Inside the Auth Service
+
+The auth service uses a server-side guard layout for non-landing pages. The guard validates the refresh cookie without rotating it and redirects to `/` if the session is missing or invalid.
+
+If you add new pages that should be protected, place them under the `(protected)` route group.
+
+## 9. Convex (Server Auth Verification)
 
 Convex must verify JWTs via JWKS (public key). Use the **custom JWT provider**:
 
@@ -214,7 +222,7 @@ export WAY_AUTH_JWKS_URL=http://localhost:3000/api/v1/jwks
 
 ### Important: Convex runs in the cloud
 
-Convex cannot reach `http://localhost:3000`. Use a tunnel (see Section 10) and set:
+Convex cannot reach `http://localhost:3000`. Use a tunnel (see Section 11) and set:
 
 ```bash
 export WAY_AUTH_JWKS_URL=https://<public-tunnel-host>/api/v1/jwks
@@ -222,7 +230,7 @@ export WAY_AUTH_JWKS_URL=https://<public-tunnel-host>/api/v1/jwks
 
 Keep `WAY_AUTH_ISSUER` aligned to the token `iss` claim.
 
-## 9. Known SDK Behavior (Important)
+## 10. Known SDK Behavior (Important)
 
 ### Relative URL handling
 
@@ -251,7 +259,7 @@ When a response is not JSON, the SDK throws `WayAuthApiError` with:
 
 This helps identify when an endpoint returns HTML instead of JSON.
 
-## 10. Exposing JWKS for Convex (Cloudflare Tunnel)
+## 11. Exposing JWKS for Convex (Cloudflare Tunnel)
 
 1. Install:
 
@@ -277,7 +285,7 @@ export WAY_AUTH_JWKS_URL=https://<random>.trycloudflare.com/api/v1/jwks
 bun run dev:convex
 ```
 
-## 11. Common Troubleshooting
+## 12. Common Troubleshooting
 
 ### "Response body was not valid JSON"
 
@@ -294,7 +302,7 @@ Convex cannot verify JWT:
 - JWKS unreachable
 - using OIDC provider config instead of `customJwt`
 
-## 12. Example Testing Flow
+## 13. Example Testing Flow
 
 1. Start auth service at `http://localhost:3000`
 2. Configure CORS for your frontend origin

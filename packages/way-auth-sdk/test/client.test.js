@@ -68,6 +68,28 @@ describe("createWayAuthClient", () => {
     expect(mock.calls[0].input).toBe("https://auth.example.com/api/v1/login");
   });
 
+  it("adds signup secret header when configured", async () => {
+    const mock = createMockFetch([
+      () =>
+        jsonResponse({
+          user: { id: "u_1", email: "demo@example.com" },
+          accessToken: "token_1",
+          tokenType: "Bearer",
+          expiresIn: 900,
+        }),
+    ]);
+
+    const client = createWayAuthClient({
+      baseUrl: "https://auth.example.com",
+      fetch: mock.fetch,
+      signupSecret: "super-secret",
+    });
+
+    await client.signup({ email: "demo@example.com", password: "secret-password" });
+    const headers = new Headers(mock.calls[0].init.headers);
+    expect(headers.get("x-way-signup-secret")).toBe("super-secret");
+  });
+
   it("resolves relative fetchWithAuth URLs against auth base URL", async () => {
     const mock = createMockFetch([() => jsonResponse({ user: { id: "u_1", email: "demo@example.com" } })]);
 

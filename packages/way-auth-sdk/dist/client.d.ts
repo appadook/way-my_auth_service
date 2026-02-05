@@ -9,6 +9,7 @@ export type WayAuthClientOptions = {
     autoRefresh?: boolean;
     tokenStore?: AccessTokenStore;
     endpoints?: Partial<WayAuthEndpoints>;
+    signupSecret?: string;
 };
 export declare class WayAuthApiError extends Error {
     readonly status: number;

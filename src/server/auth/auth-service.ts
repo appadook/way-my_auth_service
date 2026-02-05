@@ -1,4 +1,4 @@
-import { createUser, findUserByEmail } from "@/server/auth/repositories/user-repository";
+import { createUser, findUserByEmail, findUserById } from "@/server/auth/repositories/user-repository";
 import {
   findSessionById,
   revokeSessionById,
@@ -172,4 +172,50 @@ export async function logoutSession(rawRefreshToken: string): Promise<void> {
   }
 
   await revokeSessionById(parsed.sessionId);
+}
+
+export async function validateRefreshSession(
+  rawRefreshToken: string,
+): Promise<{ ok: true; data: { user: AuthUser; sessionId: string } } | { ok: false }> {
+  const parsed = parseRefreshToken(rawRefreshToken);
+  if (!parsed) {
+    return { ok: false };
+  }
+
+  const session = await findSessionById(parsed.sessionId);
+  if (!session) {
+    return { ok: false };
+  }
+
+  const now = new Date();
+  if (session.revokedAt || session.replacedBySessionId || session.expiresAt <= now) {
+    return { ok: false };
+  }
+
+  const isValidSecret = await verifyRefreshTokenSecret(session.refreshTokenHash, parsed.secret);
+  if (!isValidSecret) {
+    return { ok: false };
+  }
+
+  const user = await createUserSessionUser(session.userId);
+  if (!user) {
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    data: {
+      user,
+      sessionId: session.id,
+    },
+  };
+}
+
+async function createUserSessionUser(userId: string): Promise<AuthUser | null> {
+  const user = await findUserById(userId);
+  if (!user) {
+    return null;
+  }
+
+  return { id: user.id, email: user.email };
 }

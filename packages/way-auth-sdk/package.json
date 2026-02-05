@@ -30,6 +30,9 @@
       "import": "./dist/types.js"
     }
   },
+  "bin": {
+    "way-auth-setup": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "README.md"

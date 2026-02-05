@@ -42,6 +42,12 @@ export default function Home() {
                 >
                   Open API Playground
                 </Link>
+                <Link
+                  href="/docs"
+                  className="rounded-xl border border-slate-300/30 bg-slate-900/55 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-[#9fdd58]/55"
+                >
+                  Read API Docs
+                </Link>
                 <a
                   href="/api/v1/jwks"
                   className="rounded-xl border border-slate-300/30 bg-slate-900/55 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-[#9fdd58]/55"

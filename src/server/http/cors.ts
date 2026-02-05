@@ -1,27 +1,59 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { listCorsOrigins } from "@/server/http/cors-origins";
 
 const CORS_ALLOWED_HEADERS = "content-type, authorization";
 const CORS_ALLOWED_METHODS = "GET, POST, OPTIONS";
 const CORS_MAX_AGE_SECONDS = "600";
+const CORS_CACHE_TTL_MS = 30_000;
 
-const allowedOrigins = new Set(
-  env.CORS_ALLOWED_ORIGINS.split(",")
-    .map((origin) => origin.trim().replace(/\/+$/, ""))
-    .filter((origin) => origin.length > 0),
-);
+let corsCache: { origins: Set<string>; expiresAt: number } | null = null;
 
-function normalizeOrigin(origin: string): string {
-  return origin.trim().replace(/\/+$/, "");
+function normalizeOrigin(origin: string): string | null {
+  const trimmed = origin.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.origin;
+  } catch {
+    return null;
+  }
 }
 
-function getAllowedOrigin(request: NextRequest): string | null {
+async function getAllowedOrigins(): Promise<Set<string>> {
+  const now = Date.now();
+  if (corsCache && corsCache.expiresAt > now) {
+    return corsCache.origins;
+  }
+
+  const origins = await listCorsOrigins();
+  const nextOrigins = new Set(origins.map((origin) => origin.origin));
+  corsCache = {
+    origins: nextOrigins,
+    expiresAt: now + CORS_CACHE_TTL_MS,
+  };
+
+  return nextOrigins;
+}
+
+async function getAllowedOrigin(request: NextRequest): Promise<string | null> {
   const requestOrigin = request.headers.get("origin");
   if (!requestOrigin) {
     return null;
   }
 
   const normalizedOrigin = normalizeOrigin(requestOrigin);
+  if (!normalizedOrigin) {
+    return null;
+  }
+
+  if (normalizedOrigin === request.nextUrl.origin) {
+    return normalizedOrigin;
+  }
+
+  const allowedOrigins = await getAllowedOrigins();
   if (!allowedOrigins.has(normalizedOrigin)) {
     return null;
   }
@@ -57,8 +89,8 @@ function applyCorsHeaders(response: NextResponse, origin: string): NextResponse 
   return response;
 }
 
-export function withCors(request: NextRequest, response: NextResponse): NextResponse {
-  const allowedOrigin = getAllowedOrigin(request);
+export async function withCors(request: NextRequest, response: NextResponse): Promise<NextResponse> {
+  const allowedOrigin = await getAllowedOrigin(request);
   if (!allowedOrigin) {
     return response;
   }
@@ -66,8 +98,8 @@ export function withCors(request: NextRequest, response: NextResponse): NextResp
   return applyCorsHeaders(response, allowedOrigin);
 }
 
-export function handleCorsPreflight(request: NextRequest): NextResponse {
-  const allowedOrigin = getAllowedOrigin(request);
+export async function handleCorsPreflight(request: NextRequest): Promise<NextResponse> {
+  const allowedOrigin = await getAllowedOrigin(request);
   if (!allowedOrigin) {
     return NextResponse.json(
       {
@@ -81,4 +113,8 @@ export function handleCorsPreflight(request: NextRequest): NextResponse {
   }
 
   return applyCorsHeaders(new NextResponse(null, { status: 204 }), allowedOrigin);
+}
+
+export function invalidateCorsCache(): void {
+  corsCache = null;
 }

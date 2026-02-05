@@ -1,9 +1,8 @@
 # Authentication Service – Product Requirements Document (PRD)
 
-
 ## 1. Purpose & Scope
 
-This Project is WAY Auth, WAY stands for Who You Are and a **standalone authentication microservice** that provides:
+This project is WAY Auth (Who You Are): a **standalone authentication microservice** that provides:
 
 - Secure user authentication using **email + password**
 - Stateless **JWT-based access tokens**
@@ -35,7 +34,7 @@ To keep v1 small and correct, this service will **not** implement:
 - SSO / enterprise features
 - Magic links
 - MFA
-- UI pages (login forms live in client apps)
+- Full UI apps (only a small internal login + playground exist for testing)
 
 The API is **purely programmatic**.
 
@@ -54,7 +53,7 @@ Auth API (Vercel, Node runtime)
         v
 Neon Postgres
         |
-        | Session / Rate-limit state
+        | Rate-limit state
         v
 Upstash Redis
 ```
@@ -67,7 +66,9 @@ Upstash Redis
 - **Database**: Neon Postgres
 - **ORM**: Prisma
 - **JWT / Crypto**: jose (RS256)
+- **Password hashing**: argon2id
 - **Cache / Rate limiting**: Upstash Redis
+- **Runtime tooling**: Bun
 
 ---
 
@@ -76,11 +77,10 @@ Upstash Redis
 ### 5.1 Local Project Initialization
 
 ```bash
-npx create-next-app@latest auth-service
-cd auth-service
+bunx create-next-app@latest . --typescript --eslint --app --src-dir --import-alias "@/*"
 ```
 
-Ensure **Node.js ≥ 18**.
+Ensure **Node.js ≥ 18** and **Bun** installed.
 
 ---
 
@@ -91,7 +91,7 @@ Ensure **Node.js ≥ 18**.
    - **Pooled connection** (for runtime)
    - **Direct connection** (for migrations)
 
-Add to `.env.local`:
+Add to `.env`:
 
 ```bash
 DATABASE_URL="postgresql://<pooled-connection>"
@@ -103,26 +103,26 @@ DIRECT_URL="postgresql://<direct-connection>"
 ### 5.3 Prisma Setup
 
 ```bash
-npm install -D prisma
-npm install @prisma/client
-npx prisma init
+bun add -d prisma
+bun add @prisma/client
+bunx prisma init
 ```
 
 After defining your schema:
 
 ```bash
-npx prisma migrate dev
-npx prisma generate
+bun run prisma:migrate -- --name init_auth
+bun run prisma:generate
 ```
 
 ---
 
 ### 5.4 Upstash Redis Setup
 
-1. Create an Upstash Redis database (or via Vercel Marketplace).
+1. Create an Upstash Redis database.
 2. Copy REST credentials.
 
-Add to `.env.local`:
+Add to `.env`:
 
 ```bash
 UPSTASH_REDIS_REST_URL="https://..."
@@ -132,7 +132,7 @@ UPSTASH_REDIS_REST_TOKEN="..."
 Install dependencies:
 
 ```bash
-npm install @upstash/redis @upstash/ratelimit
+bun add @upstash/redis @upstash/ratelimit
 ```
 
 ---
@@ -148,27 +148,28 @@ openssl rsa -in private.pem -pubout -out public.pem
 
 Store:
 - `private.pem` securely (env / secrets manager)
-- Expose public key via `/v1/jwks`
+- Expose public key via `/api/v1/jwks`
 
 ---
 
 ## 6. Public API Overview
 
-- `POST /v1/signup`
-- `POST /v1/login`
-- `POST /v1/refresh`
-- `POST /v1/logout`
-- `GET  /v1/jwks`
+- `POST /api/v1/signup`
+- `POST /api/v1/login`
+- `POST /api/v1/refresh`
+- `POST /api/v1/logout`
+- `GET  /api/v1/me`
+- `GET  /api/v1/jwks`
 
 ---
 
 ## 7. Security Requirements
 
-- Passwords hashed with bcrypt or argon2id
+- Passwords hashed with argon2id
 - Refresh tokens stored hashed
 - Refresh token rotation enabled
 - HttpOnly, Secure cookies
-- CORS enforced per client app
+- CORS enforced per client app via admin-managed origin list
 - Rate limiting via Upstash
 
 ---
@@ -177,7 +178,7 @@ Store:
 
 ### Convex
 - Configure Convex with `customJwt`
-- Point JWKS to `/v1/jwks`
+- Point JWKS to `/api/v1/jwks`
 - Use `sub` as userId
 
 ### Frontend Apps
@@ -194,7 +195,12 @@ Set environment variables in Vercel:
 - `DIRECT_URL`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
-- JWT keys / issuer values
+- `JWT_PRIVATE_KEY`
+- `JWT_PUBLIC_KEY`
+- `JWT_ISSUER`
+- `JWT_AUDIENCE`
+- `REFRESH_COOKIE_NAME`
+- `ADMIN_EMAILS`
 
 Redeploy after env changes.
 

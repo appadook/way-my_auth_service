@@ -39,3 +39,10 @@ model Session {
   @@index([expiresAt])
   @@index([revokedAt])
 }
+
+model CorsOrigin {
+  id        String   @id @default(cuid())
+  origin    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
