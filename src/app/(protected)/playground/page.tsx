@@ -173,10 +173,10 @@ function maskToken(token: string): string {
 
 function StatusBadge({ status, ok }: { status: number; ok: boolean }) {
   const color = ok
-    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-    : "bg-red-500/10 text-red-300 border-red-500/20";
+    ? "text-emerald-400 border-emerald-500/20"
+    : "text-red-400 border-red-500/20";
   return (
-    <span className={`rounded-md border px-2 py-0.5 font-mono text-xs font-bold ${color}`}>
+    <span className={`border px-2 py-0.5 font-mono text-[10px] font-bold ${color}`}>
       {status}
     </span>
   );
@@ -662,73 +662,65 @@ export default function PlaygroundPage() {
   }
 
   const selectClass =
-    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-[#9fdd58]/40";
+    "w-full border border-[#9fdd58]/10 bg-[#050a0f] px-3 py-2 font-mono text-xs text-slate-200 outline-none transition focus:border-[#9fdd58]/30";
   const inputClass =
-    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-[#9fdd58]/40";
+    "w-full border border-[#9fdd58]/10 bg-[#050a0f] px-3 py-2 font-mono text-xs text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-[#9fdd58]/30";
   const textareaClass =
-    "w-full rounded-lg border border-slate-600/30 bg-slate-950/60 p-3 font-mono text-xs text-slate-200 outline-none transition focus:border-[#9fdd58]/40";
+    "w-full border border-[#9fdd58]/10 bg-[#050a0f] p-3 font-mono text-[11px] text-slate-200 outline-none transition focus:border-[#9fdd58]/30";
 
   return (
-    <div className="min-h-screen px-5 py-8 text-slate-100 md:px-8 md:py-10">
-      <main className="mx-auto max-w-7xl space-y-5">
+    <div className="grid-bg min-h-screen px-4 py-6 text-[#e0eaf3] md:px-6 md:py-8">
+      <main className="mx-auto max-w-7xl space-y-4">
         {/* ── Nav ── */}
-        <nav className="animate-fade-in-up glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3">
+        <nav className="animate-fade-in-up hud-panel flex flex-wrap items-center justify-between gap-3 rounded-none px-5 py-3">
           <div className="flex items-center gap-3">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={36} height={36} className="h-9 w-9" />
+            <Image src="/way-asset-logo.png" alt="WAY Auth" width={28} height={28} className="h-7 w-7" />
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">WAY Auth</p>
-              <p className="font-display text-base tracking-wide">API Playground</p>
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">WAY Auth</p>
+              <p className="font-display text-sm tracking-widest">API Playground</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-            >
+          <div className="flex flex-wrap gap-1">
+            <Link href="/" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
               Home
             </Link>
-            <Link
-              href="/docs"
-              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-            >
+            <Link href="/docs" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
               Docs
             </Link>
             <Link
               href="/playground"
-              className="rounded-lg border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-2 text-xs font-semibold text-[#c8ef97]"
+              className="border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#9fdd58]"
             >
               Playground
             </Link>
-            <Link
-              href="/admin/cors"
-              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-            >
-              CORS Admin
+            <Link href="/admin/cors" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
+              CORS
             </Link>
           </div>
         </nav>
 
         {/* ── Notice bar ── */}
-        <div className="animate-fade-in-up delay-100 flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/80">
-          <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-xs">
-            <span className="font-mono">Set-Cookie</span> headers and HttpOnly cookie values are hidden from JavaScript.
+        <div className="animate-fade-in-up delay-100 flex items-start gap-2.5 border-l-2 border-amber-500/20 bg-[#0a1018]/90 px-4 py-2.5">
+          <span className="mt-px font-mono text-[10px] font-bold text-amber-400">NOTE</span>
+          <span className="font-mono text-[10px] text-slate-500">
+            <span className="text-slate-400">Set-Cookie</span> headers and HttpOnly cookie values are hidden from JavaScript.
             Use the cookie probe below to verify refresh cookie presence.
           </span>
         </div>
 
         {/* ── Main grid ── */}
-        <div className="grid gap-5 lg:grid-cols-12">
+        <div className="grid gap-4 lg:grid-cols-12">
           {/* ── Request composer ── */}
-          <section className="animate-fade-in-up delay-200 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5 lg:col-span-7">
-            <h2 className="font-display text-lg tracking-wide text-slate-100">Request Composer</h2>
+          <section className="animate-fade-in-up delay-200 hud-panel rounded-none p-5 lg:col-span-7">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-px bg-[#9fdd58]/40" />
+              <h2 className="font-display text-xs tracking-[0.2em] text-slate-300">Request Composer</h2>
+            </div>
 
             {/* Preset + credentials row */}
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <label className="space-y-1.5 text-xs">
-                <span className="font-medium uppercase tracking-wider text-slate-400">Preset</span>
+              <label className="space-y-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Preset</span>
                 <select
                   value={selectedPresetId}
                   onChange={(event) => applyPreset(event.target.value)}
@@ -743,8 +735,8 @@ export default function PlaygroundPage() {
                 </select>
               </label>
 
-              <label className="space-y-1.5 text-xs">
-                <span className="font-medium uppercase tracking-wider text-slate-400">Credentials</span>
+              <label className="space-y-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Credentials</span>
                 <select
                   value={credentialsMode}
                   onChange={(event) => setCredentialsMode(event.target.value as CredentialsMode)}
@@ -758,7 +750,7 @@ export default function PlaygroundPage() {
             </div>
 
             {/* Auto token injection */}
-            <div className="mt-3 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs text-slate-400">
+            <div className="mt-3 border-l-2 border-[#9fdd58]/10 bg-[#050a0f]/60 py-2 pl-3 pr-3 text-xs">
               <label className="flex items-start gap-2">
                 <input
                   type="checkbox"
@@ -766,19 +758,19 @@ export default function PlaygroundPage() {
                   onChange={(event) => setUseLatestAccessTokenForMe(event.target.checked)}
                   className="mt-0.5 accent-[#9fdd58]"
                 />
-                <span>
-                  Auto-inject latest access token for <span className="font-mono text-slate-300">GET /api/v1/me</span>
+                <span className="text-slate-500">
+                  Auto-inject latest access token for <span className="font-mono text-slate-400">GET /api/v1/me</span>
                 </span>
               </label>
-              <p className="mt-1.5 font-mono text-[11px] text-slate-500">
+              <p className="mt-1 pl-5 font-mono text-[10px] text-slate-600">
                 {latestAccessToken ? `Token: ${maskToken(latestAccessToken)}` : "No token captured yet"}
               </p>
             </div>
 
             {/* Method + path */}
-            <div className="mt-4 grid gap-3 md:grid-cols-[160px_1fr]">
-              <label className="space-y-1.5 text-xs">
-                <span className="font-medium uppercase tracking-wider text-slate-400">Method</span>
+            <div className="mt-4 grid gap-3 md:grid-cols-[140px_1fr]">
+              <label className="space-y-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Method</span>
                 <select
                   value={method}
                   onChange={(event) => setMethod(event.target.value as HttpMethod)}
@@ -792,55 +784,55 @@ export default function PlaygroundPage() {
                 </select>
               </label>
 
-              <label className="space-y-1.5 text-xs">
-                <span className="font-medium uppercase tracking-wider text-slate-400">Path</span>
+              <label className="space-y-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Path</span>
                 <input
                   value={path}
                   onChange={(event) => setPath(event.target.value)}
                   className={inputClass}
                   placeholder="/api/v1/signup"
                 />
-                {validationErrors.path && <p className="text-red-400">{validationErrors.path}</p>}
+                {validationErrors.path && <p className="font-mono text-[10px] text-red-400">{validationErrors.path}</p>}
               </label>
             </div>
 
             {/* Headers */}
-            <label className="mt-4 block space-y-1.5 text-xs">
-              <span className="font-medium uppercase tracking-wider text-slate-400">Headers (JSON)</span>
+            <label className="mt-4 block space-y-1.5">
+              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Headers (JSON)</span>
               <textarea
                 value={headersText}
                 onChange={(event) => setHeadersText(event.target.value)}
-                className={`h-32 ${textareaClass}`}
+                className={`h-28 ${textareaClass}`}
                 spellCheck={false}
               />
-              {validationErrors.headers && <p className="text-red-400">{validationErrors.headers}</p>}
+              {validationErrors.headers && <p className="font-mono text-[10px] text-red-400">{validationErrors.headers}</p>}
               {selectedPresetId === "signup" && (
-                <p className="text-slate-500">
-                  Include <span className="font-mono text-slate-400">{`"${SIGNUP_SECRET_HEADER}": "your-secret"`}</span> if signup is restricted.
+                <p className="font-mono text-[10px] text-slate-600">
+                  Include <span className="text-slate-400">{`"${SIGNUP_SECRET_HEADER}": "your-secret"`}</span> if signup is restricted.
                 </p>
               )}
             </label>
 
             {/* Body */}
-            <label className="mt-4 block space-y-1.5 text-xs">
-              <span className="font-medium uppercase tracking-wider text-slate-400">Body (JSON)</span>
+            <label className="mt-4 block space-y-1.5">
+              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-slate-500">Body (JSON)</span>
               <textarea
                 value={bodyText}
                 onChange={(event) => setBodyText(event.target.value)}
-                className={`h-40 ${textareaClass}`}
+                className={`h-36 ${textareaClass}`}
                 spellCheck={false}
                 placeholder={methodSupportsBody(method) ? '{\n  "key": "value"\n}' : "Method does not use body"}
               />
-              {validationErrors.body && <p className="text-red-400">{validationErrors.body}</p>}
+              {validationErrors.body && <p className="font-mono text-[10px] text-red-400">{validationErrors.body}</p>}
             </label>
 
             {/* Action buttons */}
-            <div className="mt-5 flex flex-wrap gap-2.5">
+            <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={handleSendRequest}
                 disabled={isSending || isRunningScenario}
-                className="rounded-lg bg-[#9fdd58] px-5 py-2.5 text-sm font-semibold text-[#07101c] transition hover:bg-[#8ed14c] hover:shadow-[0_0_20px_rgba(159,221,88,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-[#9fdd58]/40 bg-[#9fdd58] px-5 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-[#050a0f] transition hover:shadow-[0_0_20px_rgba(159,221,88,0.15)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSending ? "Sending..." : "Send Request"}
               </button>
@@ -848,7 +840,7 @@ export default function PlaygroundPage() {
                 type="button"
                 onClick={checkCookiePresence}
                 disabled={isRunningScenario}
-                className="rounded-lg border border-slate-500/30 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-400/40 hover:bg-white/[0.07]"
+                className="border border-[#9fdd58]/15 bg-transparent px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-slate-300 transition hover:border-[#9fdd58]/30 hover:text-[#9fdd58]"
               >
                 Check Cookie
               </button>
@@ -856,57 +848,55 @@ export default function PlaygroundPage() {
                 type="button"
                 onClick={runFullAuthScenario}
                 disabled={isSending || isRunningScenario}
-                className="rounded-lg border border-emerald-500/25 bg-emerald-500/8 px-4 py-2.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-emerald-400 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isRunningScenario ? "Running..." : "Full Auth Scenario"}
               </button>
             </div>
 
             {/* Cookie probe result */}
-            <div className="mt-4 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs">
-              <p className="font-medium text-slate-300">Cookie Probe</p>
-              {cookieProbe.status === "idle" && <p className="mt-1 text-slate-500">No probe run yet.</p>}
-              {cookieProbe.status === "loading" && (
-                <p className="mt-1 text-slate-400">Checking...</p>
-              )}
-              {cookieProbe.status === "error" && <p className="mt-1 text-red-400">{cookieProbe.message}</p>}
+            <div className="mt-4 border-l-2 border-[#3a5f95]/15 bg-[#050a0f]/60 py-2 pl-3 pr-3 text-xs">
+              <p className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-500">Cookie Probe</p>
+              {cookieProbe.status === "idle" && <p className="mt-1 font-mono text-[10px] text-slate-600">No probe run yet.</p>}
+              {cookieProbe.status === "loading" && <p className="mt-1 font-mono text-[10px] text-slate-400">Checking...</p>}
+              {cookieProbe.status === "error" && <p className="mt-1 font-mono text-[10px] text-red-400">{cookieProbe.message}</p>}
               {cookieProbe.status === "success" && (
-                <pre className="code-block mt-2 !p-2 !text-[11px]">
+                <pre className="code-block mt-2 !p-2 !text-[10px]">
                   {JSON.stringify(cookieProbe.payload, null, 2)}
                 </pre>
               )}
             </div>
 
             {/* Scenario runner */}
-            <div className="mt-4 rounded-lg border border-slate-700/20 bg-slate-950/30 p-3 text-xs">
-              <p className="font-medium text-slate-300">Full Scenario</p>
-              <p className="mt-1 text-slate-500">
+            <div className="mt-4 border-l-2 border-emerald-500/10 bg-[#050a0f]/60 py-2 pl-3 pr-3 text-xs">
+              <p className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-500">Full Scenario</p>
+              <p className="mt-1 font-mono text-[10px] text-slate-600">
                 Signup, cookie check, refresh x2, logout, cookie check, refresh fail, login, cookie check.
               </p>
-              {scenarioLog.length === 0 && <p className="mt-2 text-slate-500">No scenario run yet.</p>}
+              {scenarioLog.length === 0 && <p className="mt-2 font-mono text-[10px] text-slate-600">No scenario run yet.</p>}
               {scenarioLog.length > 0 && (
-                <div className="mt-2 space-y-1.5">
+                <div className="mt-2 space-y-1">
                   {scenarioLog.map((entry) => (
                     <div
                       key={entry.id}
-                      className={`rounded-lg border p-2.5 ${
+                      className={`border-l-2 py-1.5 pl-2.5 ${
                         entry.status === "pass"
-                          ? "border-emerald-500/15 bg-emerald-500/5"
-                          : "border-red-500/15 bg-red-500/5"
+                          ? "border-emerald-500/20 bg-emerald-500/3"
+                          : "border-red-500/20 bg-red-500/3"
                       }`}
                     >
-                      <p className="font-medium">
+                      <p className="font-mono text-[10px]">
                         <span
-                          className={`mr-1.5 font-mono text-[11px] font-bold ${
+                          className={`mr-1.5 font-bold ${
                             entry.status === "pass" ? "text-emerald-400" : "text-red-400"
                           }`}
                         >
                           {entry.status === "pass" ? "PASS" : "FAIL"}
                         </span>
-                        <span className="text-slate-300">{entry.name}</span>
+                        <span className="text-slate-400">{entry.name}</span>
                       </p>
-                      <p className="mt-1 text-slate-400">{entry.detail}</p>
-                      <p className="mt-1 text-[11px] text-slate-600">
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-500">{entry.detail}</p>
+                      <p className="mt-0.5 font-mono text-[9px] text-slate-700">
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
@@ -917,51 +907,54 @@ export default function PlaygroundPage() {
           </section>
 
           {/* ── Response + History ── */}
-          <section className="space-y-5 lg:col-span-5">
+          <section className="space-y-4 lg:col-span-5">
             {/* Latest response */}
-            <article className="animate-fade-in-up delay-300 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5">
-              <h2 className="font-display text-lg tracking-wide text-slate-100">Response</h2>
-              {!currentResponse && <p className="mt-3 text-sm text-slate-500">No response yet.</p>}
+            <article className="animate-fade-in-up delay-300 hud-panel rounded-none p-5">
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-px bg-[#9fdd58]/40" />
+                <h2 className="font-display text-xs tracking-[0.2em] text-slate-300">Response</h2>
+              </div>
+              {!currentResponse && <p className="mt-3 font-mono text-[10px] text-slate-600">No response yet.</p>}
               {currentResponse && (
                 <div className="mt-3 space-y-3 text-sm">
                   {/* Status grid */}
-                  <div className="grid grid-cols-2 gap-2.5 text-xs">
-                    <div className="rounded-lg border border-slate-700/20 bg-slate-950/30 p-2.5">
-                      <p className="text-[11px] text-slate-500">Status</p>
+                  <div className="grid grid-cols-2 gap-px bg-[#9fdd58]/5">
+                    <div className="bg-[#050a0f]/90 p-2.5">
+                      <p className="font-mono text-[9px] text-slate-600">Status</p>
                       <div className="mt-1">
                         <StatusBadge status={currentResponse.status} ok={currentResponse.ok} />
                       </div>
                     </div>
-                    <div className="rounded-lg border border-slate-700/20 bg-slate-950/30 p-2.5">
-                      <p className="text-[11px] text-slate-500">Duration</p>
-                      <p className="mt-1 font-mono font-semibold text-slate-200">{currentResponse.durationMs} ms</p>
+                    <div className="bg-[#050a0f]/90 p-2.5">
+                      <p className="font-mono text-[9px] text-slate-600">Duration</p>
+                      <p className="mt-1 font-mono text-xs font-bold text-slate-200">{currentResponse.durationMs} ms</p>
                     </div>
                   </div>
 
                   {currentResponse.networkError && (
-                    <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-xs text-red-300">
+                    <div className="border-l-2 border-red-500/20 bg-red-950/10 py-2 pl-3 font-mono text-[10px] text-red-300">
                       Network error: {currentResponse.networkError}
                     </div>
                   )}
 
                   {/* Response headers */}
                   <div>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Headers</p>
-                    <pre className="code-block max-h-36 !text-[11px]">
+                    <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">Headers</p>
+                    <pre className="code-block max-h-32 !text-[10px]">
                       {JSON.stringify(currentResponse.headers, null, 2)}
                     </pre>
                   </div>
 
                   {/* Response body */}
                   <div>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Body</p>
-                    <pre className="code-block max-h-44 !text-[11px]">
+                    <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">Body</p>
+                    <pre className="code-block max-h-40 !text-[10px]">
                       {currentResponse.parsedBody !== null
                         ? JSON.stringify(currentResponse.parsedBody, null, 2)
                         : currentResponse.rawBody || "(empty)"}
                     </pre>
                     {currentResponse.parseError && (
-                      <p className="mt-1 text-[11px] text-amber-400">{currentResponse.parseError}</p>
+                      <p className="mt-1 font-mono text-[10px] text-amber-400">{currentResponse.parseError}</p>
                     )}
                   </div>
                 </div>
@@ -969,39 +962,42 @@ export default function PlaygroundPage() {
             </article>
 
             {/* Request history */}
-            <article className="animate-fade-in-up delay-400 rounded-2xl border border-slate-600/15 bg-[linear-gradient(160deg,rgba(15,23,41,0.75),rgba(21,36,61,0.45))] p-5">
-              <h2 className="font-display text-lg tracking-wide text-slate-100">History</h2>
-              {requestHistory.length === 0 && <p className="mt-3 text-sm text-slate-500">No requests yet.</p>}
-              <div className="mt-3 space-y-2">
+            <article className="animate-fade-in-up delay-400 hud-panel rounded-none p-5">
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-px bg-[#9fdd58]/40" />
+                <h2 className="font-display text-xs tracking-[0.2em] text-slate-300">History</h2>
+              </div>
+              {requestHistory.length === 0 && <p className="mt-3 font-mono text-[10px] text-slate-600">No requests yet.</p>}
+              <div className="mt-3 space-y-1.5">
                 {requestHistory.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-slate-700/15 bg-slate-950/25 p-3">
+                  <div key={item.id} className="border border-[#9fdd58]/6 bg-[#050a0f]/60 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <StatusBadge status={item.response.status} ok={item.response.ok} />
-                        <span className="font-mono text-xs text-slate-300">
+                        <span className="font-mono text-[10px] text-slate-400">
                           {item.request.method} {item.request.path}
                         </span>
                       </div>
                       <button
                         type="button"
                         onClick={() => loadHistoryItem(item)}
-                        className="rounded-md border border-slate-600/25 bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-400 transition hover:text-slate-200"
+                        className="border border-[#9fdd58]/10 bg-transparent px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]"
                       >
                         Load
                       </button>
                     </div>
-                    <p className="mt-1.5 text-[11px] text-slate-500">
+                    <p className="mt-1 font-mono text-[9px] text-slate-600">
                       {item.response.durationMs} ms &middot; {new Date(item.response.timestamp).toLocaleTimeString()}
                     </p>
                     <details className="mt-2 text-xs">
-                      <summary className="cursor-pointer font-medium text-slate-400 transition hover:text-slate-200">
+                      <summary className="cursor-pointer font-mono text-[10px] text-slate-500 transition hover:text-[#9fdd58]">
                         View details
                       </summary>
                       <div className="mt-2 grid gap-2">
-                        <pre className="code-block max-h-32 !text-[11px]">
+                        <pre className="code-block max-h-28 !text-[10px]">
                           {JSON.stringify(item.request, null, 2)}
                         </pre>
-                        <pre className="code-block max-h-32 !text-[11px]">
+                        <pre className="code-block max-h-28 !text-[10px]">
                           {JSON.stringify(item.response, null, 2)}
                         </pre>
                       </div>

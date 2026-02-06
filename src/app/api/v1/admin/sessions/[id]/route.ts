@@ -33,7 +33,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id?: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const respond = (response: NextResponse) => withCors(request, response);
   const authError = await requireAdmin(request);
@@ -41,7 +41,8 @@ export async function DELETE(
     return respond(authError);
   }
 
-  const sessionId = params.id?.trim();
+  const resolvedParams = await params;
+  const sessionId = resolvedParams.id?.trim();
   if (!sessionId) {
     return respond(apiError(400, "invalid_session_id", "Session id is required."));
   }
