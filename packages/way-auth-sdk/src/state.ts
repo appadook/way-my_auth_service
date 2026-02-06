@@ -1,5 +1,7 @@
 import type { WayAuthClient } from "./client";
-import type { WayAuthCredentialInput, WayAuthUser } from "./types";
+import { getWayAuthErrorMessage } from "./errors";
+import type { WayAuthCredentialInput, WayAuthSignupInputWithConfirm, WayAuthUser } from "./types";
+import { validatePasswordConfirmation } from "./validation";
 
 export type WayAuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated" | "error";
 
@@ -11,8 +13,18 @@ export type WayAuthState = {
   lastUpdatedAt: string | null;
 };
 
+export type WayAuthAuthContext = "bootstrap" | "signup" | "login" | "refresh" | "me" | "logout";
+
+export type WayAuthStateCallbacks = {
+  onSignupSuccess?: (state: WayAuthState, user: WayAuthUser) => void;
+  onLoginSuccess?: (state: WayAuthState, user: WayAuthUser) => void;
+  onLogout?: (state: WayAuthState) => void;
+  onAuthError?: (error: unknown, context: WayAuthAuthContext) => void;
+};
+
 export type WayAuthStateOptions = {
   initialState?: Partial<WayAuthState>;
+  callbacks?: WayAuthStateCallbacks;
 };
 
 type Listener = () => void;
@@ -22,11 +34,7 @@ function nowIso(): string {
 }
 
 function toErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Unexpected authentication error.";
+  return getWayAuthErrorMessage(error, "Unexpected authentication error.");
 }
 
 function getDefaultState(): WayAuthState {
@@ -46,6 +54,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
   };
 
   const listeners = new Set<Listener>();
+  let callbacks = options.callbacks ?? {};
 
   function emit() {
     for (const listener of listeners) {
@@ -88,8 +97,9 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
       const me = await client.me();
       setAuthenticated(me.user);
       return state;
-    } catch {
+    } catch (error) {
       setUnauthenticated();
+      callbacks.onAuthError?.(error, "bootstrap");
       return state;
     }
   }
@@ -100,6 +110,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
     try {
       const result = await client.signup(input);
       setAuthenticated(result.user);
+      callbacks.onSignupSuccess?.(state, result.user);
       return state;
     } catch (error) {
       patchState({
@@ -108,8 +119,27 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
         user: null,
         initialized: true,
       });
+      callbacks.onAuthError?.(error, "signup");
       throw error;
     }
+  }
+
+  async function signupWithConfirm(input: WayAuthSignupInputWithConfirm): Promise<WayAuthState> {
+    const validation = validatePasswordConfirmation(input);
+    if (!validation.ok) {
+      const error = new Error(validation.message);
+      patchState({
+        status: "error",
+        errorMessage: validation.message,
+        user: null,
+        initialized: true,
+      });
+      callbacks.onAuthError?.(error, "signup");
+      throw error;
+    }
+
+    const { confirmPassword: _confirmPassword, ...payload } = input;
+    return signup(payload);
   }
 
   async function login(input: WayAuthCredentialInput): Promise<WayAuthState> {
@@ -118,6 +148,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
     try {
       const result = await client.login(input);
       setAuthenticated(result.user);
+      callbacks.onLoginSuccess?.(state, result.user);
       return state;
     } catch (error) {
       patchState({
@@ -126,6 +157,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
         user: null,
         initialized: true,
       });
+      callbacks.onAuthError?.(error, "login");
       throw error;
     }
   }
@@ -143,6 +175,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
       patchState({
         errorMessage: toErrorMessage(error),
       });
+      callbacks.onAuthError?.(error, "refresh");
       throw error;
     }
   }
@@ -161,6 +194,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
         initialized: true,
         errorMessage: toErrorMessage(error),
       });
+      callbacks.onAuthError?.(error, "me");
       throw error;
     }
   }
@@ -172,6 +206,7 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
       await client.logout();
     } finally {
       setUnauthenticated();
+      callbacks.onLogout?.(state);
     }
 
     return state;
@@ -189,6 +224,10 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
     return state;
   }
 
+  function setCallbacks(nextCallbacks: WayAuthStateCallbacks = {}) {
+    callbacks = nextCallbacks;
+  }
+
   function subscribe(listener: Listener): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);
@@ -197,8 +236,10 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
   return {
     getState,
     subscribe,
+    setCallbacks,
     bootstrap,
     signup,
+    signupWithConfirm,
     login,
     refresh,
     me,
@@ -209,4 +250,3 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
 }
 
 export type WayAuthStateController = ReturnType<typeof createWayAuthState>;
-

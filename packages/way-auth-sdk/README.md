@@ -62,6 +62,50 @@ console.log(me.user.id, me.user.email);
 const response = await auth.fetchWithAuth("https://api.example.com/private");
 ```
 
+### Signup with password confirmation
+
+```ts
+import { createWayAuthState } from "@way/auth-sdk/state";
+
+const state = createWayAuthState(auth);
+await state.signupWithConfirm({
+  email: "demo@example.com",
+  password: "strong-password",
+  confirmPassword: "strong-password",
+});
+```
+
+### Auth callbacks (React-friendly)
+
+```tsx
+import { useWayAuthCallbacks, useCreateWayAuthState } from "@way/auth-sdk/react";
+
+const controller = useCreateWayAuthState(auth);
+useWayAuthCallbacks(controller, {
+  onLoginSuccess: (_state, user) => {
+    console.log("Logged in", user.email);
+  },
+  onSignupSuccess: (_state, user) => {
+    console.log("Signed up", user.email);
+  },
+  onLogout: () => {
+    console.log("Logged out");
+  },
+});
+```
+
+### Error map helper
+
+```ts
+import { getWayAuthErrorMessage } from "@way/auth-sdk";
+
+try {
+  await auth.login({ email: "demo@example.com", password: "bad" });
+} catch (error) {
+  console.log(getWayAuthErrorMessage(error));
+}
+```
+
 ### Signup secret (optional)
 
 If the auth service sets `SIGNUP_SECRET`, provide it to the SDK so `signup()` can include the required header:
@@ -139,13 +183,18 @@ type WayAuthState = {
 ## React Hooks
 
 ```tsx
-import { useCreateWayAuthState, useWayAuthBootstrap, useWayAuthState } from "@way/auth-sdk/react";
+import { useCreateWayAuthState, useWayAuthBootstrap, useWayAuthCallbacks, useWayAuthState } from "@way/auth-sdk/react";
 
 const auth = createWayAuthClient({ baseUrl: "https://way-my-auth-service.vercel.app", credentials: "include" });
 
 export function AuthGate() {
   const controller = useCreateWayAuthState(auth);
   useWayAuthBootstrap(controller);
+  useWayAuthCallbacks(controller, {
+    onLoginSuccess: (_state, user) => {
+      console.log("Welcome", user.email);
+    },
+  });
   const { status, initialized, user } = useWayAuthState(controller);
 
   if (!initialized || status === "loading") return <p>Loading session...</p>;

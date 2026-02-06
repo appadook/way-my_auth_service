@@ -412,6 +412,94 @@ const endpointGroups: EndpointGroup[] = [
           response: JSON.stringify({ success: true }, null, 2),
         },
       },
+      {
+        id: "sessions-list",
+        name: "List sessions",
+        method: "GET",
+        path: "/api/v1/admin/sessions",
+        summary: "List refresh sessions with user metadata.",
+        auth: "Admin refresh session cookie.",
+        response: JSON.stringify(
+          {
+            sessions: [
+              {
+                id: "session_123",
+                user: { id: "user_123", email: "you@example.com" },
+                createdAt: "2025-01-01T12:00:00.000Z",
+                expiresAt: "2025-02-01T12:00:00.000Z",
+                revokedAt: null,
+                replacedBySessionId: null,
+                status: "active",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden"],
+        example: {
+          request: "curl https://way-my-auth-service.vercel.app/api/v1/admin/sessions",
+          response: JSON.stringify(
+            {
+              sessions: [
+                {
+                  id: "session_123",
+                  user: { id: "user_123", email: "you@example.com" },
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                  expiresAt: "2025-02-01T12:00:00.000Z",
+                  revokedAt: null,
+                  replacedBySessionId: null,
+                  status: "active",
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+        },
+      },
+      {
+        id: "sessions-revoke",
+        name: "Revoke session",
+        method: "DELETE",
+        path: "/api/v1/admin/sessions/:id",
+        summary: "Revoke a refresh session by id.",
+        auth: "Admin refresh session cookie.",
+        response: JSON.stringify(
+          {
+            session: {
+              id: "session_123",
+              user: { id: "user_123", email: "you@example.com" },
+              createdAt: "2025-01-01T12:00:00.000Z",
+              expiresAt: "2025-02-01T12:00:00.000Z",
+              revokedAt: "2025-01-05T12:00:00.000Z",
+              replacedBySessionId: null,
+              status: "revoked",
+            },
+          },
+          null,
+          2,
+        ),
+        errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden", "invalid_session_id", "session_not_found"],
+        example: {
+          request: "curl -X DELETE https://way-my-auth-service.vercel.app/api/v1/admin/sessions/session_123",
+          response: JSON.stringify(
+            {
+              session: {
+                id: "session_123",
+                user: { id: "user_123", email: "you@example.com" },
+                createdAt: "2025-01-01T12:00:00.000Z",
+                expiresAt: "2025-02-01T12:00:00.000Z",
+                revokedAt: "2025-01-05T12:00:00.000Z",
+                replacedBySessionId: null,
+                status: "revoked",
+              },
+            },
+            null,
+            2,
+          ),
+        },
+      },
     ],
   },
 ];
@@ -890,7 +978,7 @@ export default function DocsPage() {
               <SectionTitle>Admin Access</SectionTitle>
               <p className="mt-4 text-sm leading-relaxed text-slate-300/90">
                 Admin endpoints require a valid refresh session cookie and an email present in the ADMIN_EMAILS
-                allowlist. These routes are intended for managing CORS origins and other operational tasks.
+                allowlist. These routes are intended for managing CORS origins and reviewing active refresh sessions.
               </p>
               <div className="mt-4">
                 <InfoCard title="Admin emails">

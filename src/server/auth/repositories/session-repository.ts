@@ -1,4 +1,4 @@
-import type { Session } from "@/generated/prisma/client";
+import type { Session, User } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 
 type CreateSessionInput = {
@@ -18,6 +18,8 @@ type RotateSessionResult = {
   previousSessionId: string;
   nextSession: Session;
 };
+
+export type SessionWithUser = Session & { user: User };
 
 export async function createSession(input: CreateSessionInput): Promise<Session> {
   return prisma.session.create({
@@ -45,6 +47,13 @@ export async function findValidSessionByRefreshTokenHash(
 export async function findSessionById(sessionId: string): Promise<Session | null> {
   return prisma.session.findUnique({
     where: { id: sessionId },
+  });
+}
+
+export async function findSessionWithUserById(sessionId: string): Promise<SessionWithUser | null> {
+  return prisma.session.findUnique({
+    where: { id: sessionId },
+    include: { user: true },
   });
 }
 
@@ -128,4 +137,11 @@ export async function revokeSessionByRefreshTokenHash(
   });
 
   return updated.count > 0;
+}
+
+export async function listSessionsWithUser(): Promise<SessionWithUser[]> {
+  return prisma.session.findMany({
+    include: { user: true },
+    orderBy: { createdAt: "desc" },
+  });
 }

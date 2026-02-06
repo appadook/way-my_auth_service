@@ -143,6 +143,12 @@ export default function CorsAdminClient({ initialOrigins }: Props) {
             >
               CORS Admin
             </Link>
+            <Link
+              href="/admin/sessions"
+              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
+            >
+              Sessions
+            </Link>
           </div>
         </nav>
 

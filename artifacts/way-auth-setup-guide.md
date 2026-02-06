@@ -89,6 +89,19 @@ const me = await authClient.me();
 const response = await authClient.fetchWithAuth("https://api.example.com/private");
 ```
 
+### Signup with confirmation
+
+```ts
+import { createWayAuthState } from "@way/auth-sdk/state";
+
+const controller = createWayAuthState(authClient);
+await controller.signupWithConfirm({
+  email: "demo@example.com",
+  password: "password",
+  confirmPassword: "password",
+});
+```
+
 ## 5. Auth State (Framework-Agnostic)
 
 `createWayAuthState` gives you a small state machine that wraps the client and tracks user + status.
@@ -116,6 +129,22 @@ await controller.bootstrap();
 const { status, user, initialized, errorMessage, lastUpdatedAt } = controller.getState();
 ```
 
+### Callbacks
+
+```ts
+controller.setCallbacks({
+  onLoginSuccess: (_state, user) => {
+    console.log("Logged in", user.email);
+  },
+  onSignupSuccess: (_state, user) => {
+    console.log("Signed up", user.email);
+  },
+  onAuthError: (error, context) => {
+    console.log("Auth error", context, error);
+  },
+});
+```
+
 ### Behavior summary
 
 - `bootstrap()` calls `refresh()` then `me()`. If either fails, it becomes `unauthenticated`.
@@ -128,7 +157,7 @@ const { status, user, initialized, errorMessage, lastUpdatedAt } = controller.ge
 ### Hooks
 
 ```tsx
-import { useCreateWayAuthState, useWayAuthBootstrap, useWayAuthState } from "@way/auth-sdk/react";
+import { useCreateWayAuthState, useWayAuthBootstrap, useWayAuthCallbacks, useWayAuthState } from "@way/auth-sdk/react";
 
 const authClient = createWayAuthClient({
   baseUrl: "http://localhost:3000",
@@ -138,6 +167,11 @@ const authClient = createWayAuthClient({
 export function AuthGate() {
   const controller = useCreateWayAuthState(authClient);
   useWayAuthBootstrap(controller);
+  useWayAuthCallbacks(controller, {
+    onLoginSuccess: (_state, user) => {
+      console.log("Signed in", user.email);
+    },
+  });
   const { status, initialized, user, errorMessage } = useWayAuthState(controller);
 
   if (!initialized || status === "loading") return <p>Loading session...</p>;
@@ -145,6 +179,18 @@ export function AuthGate() {
   if (status !== "authenticated") return <p>Please sign in.</p>;
 
   return <p>Signed in as {user?.email}</p>;
+}
+```
+
+### Error map helper
+
+```ts
+import { getWayAuthErrorMessage } from "@way/auth-sdk";
+
+try {
+  await authClient.login({ email: "demo@example.com", password: "bad" });
+} catch (error) {
+  console.log(getWayAuthErrorMessage(error));
 }
 ```
 
