@@ -121,7 +121,13 @@ bun add ../way-my_auth_service/packages/way-auth-sdk
 Generate a consumer `.env.local` and `way-auth-setup-guide.md`:
 
 ```bash
-bunx way-auth-setup --base-url https://auth.example.com
+bunx way-auth-setup
+```
+
+Defaults to the deployed auth domain. Override if needed:
+
+```bash
+bunx way-auth-setup --base-url https://way-my-auth-service.vercel.app
 ```
 
 See:

@@ -86,7 +86,7 @@ const endpointGroups: EndpointGroup[] = [
         errors: ["invalid_signup_secret", "invalid_input", "invalid_json", "email_taken", "rate_limited"],
         example: {
           request: [
-            "curl -X POST https://auth.example.com/api/v1/signup \\",
+            "curl -X POST https://way-my-auth-service.vercel.app/api/v1/signup \\",
             "  -H 'content-type: application/json' \\",
             "  -H 'x-way-signup-secret: <secret>' \\",
             "  -d '{\"email\":\"you@example.com\",\"password\":\"strong-password\"}'",
@@ -135,7 +135,7 @@ const endpointGroups: EndpointGroup[] = [
         errors: ["invalid_credentials", "invalid_input", "invalid_json", "rate_limited"],
         example: {
           request: [
-            "curl -X POST https://auth.example.com/api/v1/login \\",
+            "curl -X POST https://way-my-auth-service.vercel.app/api/v1/login \\",
             "  -H 'content-type: application/json' \\",
             "  -d '{\"email\":\"you@example.com\",\"password\":\"strong-password\"}'",
           ].join("\n"),
@@ -174,7 +174,7 @@ const endpointGroups: EndpointGroup[] = [
         errors: ["missing_refresh_token", "invalid_refresh_token", "rate_limited"],
         example: {
           request: [
-            "curl -X POST https://auth.example.com/api/v1/refresh \\",
+            "curl -X POST https://way-my-auth-service.vercel.app/api/v1/refresh \\",
             "  --cookie 'way_refresh=<refresh-token>'",
           ].join("\n"),
           response: JSON.stringify(
@@ -207,7 +207,7 @@ const endpointGroups: EndpointGroup[] = [
         ),
         errors: [],
         example: {
-          request: "curl -X POST https://auth.example.com/api/v1/logout",
+          request: "curl -X POST https://way-my-auth-service.vercel.app/api/v1/logout",
           response: JSON.stringify({ success: true }, null, 2),
         },
       },
@@ -232,7 +232,7 @@ const endpointGroups: EndpointGroup[] = [
         errors: ["missing_bearer_token", "invalid_token"],
         example: {
           request: [
-            "curl https://auth.example.com/api/v1/me \\",
+            "curl https://way-my-auth-service.vercel.app/api/v1/me \\",
             "  -H 'authorization: Bearer <access-token>'",
           ].join("\n"),
           response: JSON.stringify(
@@ -270,7 +270,7 @@ const endpointGroups: EndpointGroup[] = [
         ),
         errors: ["internal_error"],
         example: {
-          request: "curl https://auth.example.com/api/v1/jwks",
+          request: "curl https://way-my-auth-service.vercel.app/api/v1/jwks",
           response: JSON.stringify(
             {
               keys: [
@@ -322,7 +322,7 @@ const endpointGroups: EndpointGroup[] = [
         ),
         errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden"],
         example: {
-          request: "curl https://auth.example.com/api/v1/admin/cors",
+          request: "curl https://way-my-auth-service.vercel.app/api/v1/admin/cors",
           response: JSON.stringify(
             {
               origins: [
@@ -371,7 +371,7 @@ const endpointGroups: EndpointGroup[] = [
         errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden", "invalid_input", "invalid_origin"],
         example: {
           request: [
-            "curl -X POST https://auth.example.com/api/v1/admin/cors \\",
+            "curl -X POST https://way-my-auth-service.vercel.app/api/v1/admin/cors \\",
             "  -H 'content-type: application/json' \\",
             "  -d '{\"origin\":\"https://app.example.com\"}'",
           ].join("\n"),
@@ -408,7 +408,7 @@ const endpointGroups: EndpointGroup[] = [
         ),
         errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden", "invalid_origin"],
         example: {
-          request: "curl -X DELETE https://auth.example.com/api/v1/admin/cors/origin_123",
+          request: "curl -X DELETE https://way-my-auth-service.vercel.app/api/v1/admin/cors/origin_123",
           response: JSON.stringify({ success: true }, null, 2),
         },
       },
@@ -560,7 +560,7 @@ export default function DocsPage() {
             </nav>
             <div className="mt-5 rounded-xl border border-slate-700/20 bg-slate-950/30 p-3.5 text-xs">
               <p className="font-medium text-slate-300">Base URL</p>
-              <p className="mt-1.5 font-mono text-[11px] text-slate-400">https://auth.example.com</p>
+              <p className="mt-1.5 font-mono text-[11px] text-slate-400">https://way-my-auth-service.vercel.app</p>
               <p className="mt-2 text-slate-500">All endpoints under /api/v1</p>
             </div>
           </aside>
@@ -616,7 +616,7 @@ export default function DocsPage() {
                 <CodeBlock
                   label="Client login example"
                   value={[
-                    "const response = await fetch('https://auth.example.com/api/v1/login', {",
+                    "const response = await fetch('https://way-my-auth-service.vercel.app/api/v1/login', {",
                     "  method: 'POST',",
                     "  headers: { 'content-type': 'application/json' },",
                     "  credentials: 'include',",
@@ -629,7 +629,7 @@ export default function DocsPage() {
                 <CodeBlock
                   label="Refresh example"
                   value={[
-                    "const refreshed = await fetch('https://auth.example.com/api/v1/refresh', {",
+                    "const refreshed = await fetch('https://way-my-auth-service.vercel.app/api/v1/refresh', {",
                     "  method: 'POST',",
                     "  credentials: 'include',",
                     "});",

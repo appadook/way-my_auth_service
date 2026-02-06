@@ -21,13 +21,13 @@ npm install ../way-my_auth_service/packages/way-auth-sdk
 Generate a consumer `.env.local` and a `way-auth-setup-guide.md` in your app:
 
 ```bash
-bunx way-auth-setup --base-url https://auth.example.com
+bunx way-auth-setup
 ```
 
 Options:
 
 ```bash
---base-url    (required) auth service base URL
+--base-url    (default: https://way-my-auth-service.vercel.app) auth service base URL
 --issuer      (default: base URL)
 --audience    (default: way-clients)
 --jwks-url    (default: base URL + /api/v1/jwks)
@@ -49,7 +49,7 @@ bun run test
 import { createWayAuthClient } from "@way/auth-sdk/client";
 
 const auth = createWayAuthClient({
-  baseUrl: "https://auth.example.com",
+  baseUrl: "https://way-my-auth-service.vercel.app",
   credentials: "include",
 });
 
@@ -68,7 +68,7 @@ If the auth service sets `SIGNUP_SECRET`, provide it to the SDK so `signup()` ca
 
 ```ts
 const auth = createWayAuthClient({
-  baseUrl: "https://auth.example.com",
+  baseUrl: "https://way-my-auth-service.vercel.app",
   credentials: "include",
   signupSecret: process.env.WAY_AUTH_SIGNUP_SECRET,
 });
@@ -94,7 +94,7 @@ The SDK stores the access token in memory by default. You can supply your own st
 import { createWayAuthClient, createInMemoryTokenStore } from "@way/auth-sdk/client";
 
 const tokenStore = createInMemoryTokenStore();
-const auth = createWayAuthClient({ baseUrl: "https://auth.example.com", tokenStore });
+const auth = createWayAuthClient({ baseUrl: "https://way-my-auth-service.vercel.app", tokenStore });
 ```
 
 ## Errors
@@ -141,7 +141,7 @@ type WayAuthState = {
 ```tsx
 import { useCreateWayAuthState, useWayAuthBootstrap, useWayAuthState } from "@way/auth-sdk/react";
 
-const auth = createWayAuthClient({ baseUrl: "https://auth.example.com", credentials: "include" });
+const auth = createWayAuthClient({ baseUrl: "https://way-my-auth-service.vercel.app", credentials: "include" });
 
 export function AuthGate() {
   const controller = useCreateWayAuthState(auth);
@@ -160,8 +160,8 @@ export function AuthGate() {
 import { createWayAuthGuard } from "@way/auth-sdk/server";
 
 const auth = createWayAuthGuard({
-  jwksUrl: "https://auth.example.com/api/v1/jwks",
-  issuer: "https://auth.example.com",
+  jwksUrl: "https://way-my-auth-service.vercel.app/api/v1/jwks",
+  issuer: "https://way-my-auth-service.vercel.app",
   audience: "way-clients",
 });
 

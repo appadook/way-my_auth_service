@@ -19,7 +19,7 @@ This is a step-by-step checklist to deploy the auth service on Vercel and ensure
 After the first deploy, Vercel gives a default domain like:
 
 ```
-https://way-auth-service.vercel.app
+https://way-my-auth-service.vercel.app
 ```
 
 If you want a custom domain, add it in Vercel → Settings → Domains.
@@ -54,7 +54,7 @@ SIGNUP_SECRET       (optional; if set, required for signup)
 `JWT_ISSUER` must match the deployed URL exactly (scheme + domain). Example:
 
 ```
-JWT_ISSUER=https://way-auth-service.vercel.app
+JWT_ISSUER=https://way-my-auth-service.vercel.app
 ```
 
 ---
@@ -71,7 +71,7 @@ CORS allowlist is stored in the database and managed in the admin UI.
 
 1. Open:
    ```
-   https://<auth-domain>/admin/cors
+   https://way-my-auth-service.vercel.app/admin/cors
    ```
 2. Sign in with an email listed in `ADMIN_EMAILS`
 3. Add your frontend origins (examples):
@@ -85,7 +85,7 @@ CORS allowlist is stored in the database and managed in the admin UI.
 Use the SDK CLI in each consumer app:
 
 ```bash
-bunx way-auth-setup --base-url https://<auth-domain>
+bunx way-auth-setup --base-url https://way-my-auth-service.vercel.app
 ```
 
 This generates:
@@ -95,9 +95,9 @@ This generates:
 Expected env values in the consumer app:
 
 ```
-WAY_AUTH_BASE_URL=https://<auth-domain>
-WAY_AUTH_ISSUER=https://<auth-domain>
-WAY_AUTH_JWKS_URL=https://<auth-domain>/api/v1/jwks
+WAY_AUTH_BASE_URL=https://way-my-auth-service.vercel.app
+WAY_AUTH_ISSUER=https://way-my-auth-service.vercel.app
+WAY_AUTH_JWKS_URL=https://way-my-auth-service.vercel.app/api/v1/jwks
 ```
 
 ---

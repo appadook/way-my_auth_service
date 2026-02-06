@@ -2,6 +2,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { buildConsumerConfig, buildEnvFile, buildSetupGuide } from "./cli-utils";
+const DEFAULT_BASE_URL = "https://way-my-auth-service.vercel.app";
 function parseArgs(argv) {
     const options = {};
     for (let index = 0; index < argv.length; index += 1) {
@@ -55,10 +56,10 @@ function printUsage() {
         "way-auth-setup",
         "",
         "Usage:",
-        "  way-auth-setup --base-url https://auth.example.com [options]",
+        "  way-auth-setup [options]",
         "",
         "Options:",
-        "  --base-url    (required) auth service base URL",
+        `  --base-url    (default: ${DEFAULT_BASE_URL}) auth service base URL`,
         "  --issuer      (default: base URL)",
         "  --audience    (default: way-clients)",
         "  --jwks-url    (default: base URL + /api/v1/jwks)",
@@ -86,8 +87,7 @@ async function main() {
         process.exit(0);
     }
     if (!options.baseUrl) {
-        printUsage();
-        process.exit(1);
+        options.baseUrl = DEFAULT_BASE_URL;
     }
     const config = buildConsumerConfig({
         baseUrl: options.baseUrl,
