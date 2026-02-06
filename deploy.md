@@ -9,7 +9,7 @@ This is a step-by-step checklist to deploy the auth service on Vercel and ensure
 - Push the repo to GitHub (or connect it directly in Vercel).
 - Import the project in Vercel.
 - Framework preset: **Next.js**
-- Build command: `bun run build`
+- Build command: `bun run build` (runs `prisma generate` first)
 - Install command: `bun install`
 
 ---
