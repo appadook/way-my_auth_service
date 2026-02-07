@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type { WayAuthClient } from "./client";
 import {
   createWayAuthState,
@@ -26,10 +26,19 @@ export function useCreateWayAuthState(client: WayAuthClient, options?: WayAuthSt
 }
 
 export function useWayAuthCallbacks(controller: WayAuthStateController, callbacks: WayAuthStateCallbacks) {
+  const callbacksRef = useRef<WayAuthStateCallbacks>(callbacks);
+  callbacksRef.current = callbacks;
+
   useEffect(() => {
-    controller.setCallbacks(callbacks);
+    controller.setCallbacks({
+      onSignupSuccess: (state, user) => callbacksRef.current.onSignupSuccess?.(state, user),
+      onLoginSuccess: (state, user) => callbacksRef.current.onLoginSuccess?.(state, user),
+      onLogout: (state) => callbacksRef.current.onLogout?.(state),
+      onAuthError: (error, context) => callbacksRef.current.onAuthError?.(error, context),
+    });
+
     return () => {
       controller.setCallbacks({});
     };
-  }, [controller, callbacks]);
+  }, [controller]);
 }

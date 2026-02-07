@@ -107,7 +107,7 @@ function LoginForm() {
         </div>
 
         {/* Login card */}
-        <div className="hud-panel rounded-none p-7">
+        <div className="hud-panel relative rounded-none p-7">
           {/* Top accent */}
           <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-[#9fdd58]/30 to-transparent" />
 

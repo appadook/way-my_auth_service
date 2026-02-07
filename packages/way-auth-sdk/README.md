@@ -2,6 +2,9 @@
 
 TypeScript SDK for the WAY Auth Service. It provides browser/client helpers, frontend state wrappers, React hooks, and server-side JWT verification helpers.
 
+Comprehensive implementation guide:
+- `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/GUIDE.md`
+
 ## Install (local, without publishing)
 
 From another project:

@@ -21,6 +21,10 @@ type AdminSession = {
 
 type Props = {
   initialSessions: AdminSession[];
+  initialCurrentPage: number;
+  initialPageSize: number;
+  initialTotalCount: number;
+  initialTotalPages: number;
 };
 
 const STATUS_LABELS: Record<SessionStatus, string> = {
@@ -56,11 +60,31 @@ function statusStyles(status: SessionStatus): string {
   }
 }
 
-export default function SessionsAdminClient({ initialSessions }: Props) {
+type SessionsPagePayload = {
+  sessions: AdminSession[];
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  error?: { message?: string };
+};
+
+export default function SessionsAdminClient({
+  initialSessions,
+  initialCurrentPage,
+  initialPageSize,
+  initialTotalCount,
+  initialTotalPages,
+}: Props) {
   const [sessions, setSessions] = useState<AdminSession[]>(initialSessions);
+  const [currentPage, setCurrentPage] = useState(initialCurrentPage);
+  const [pageSize] = useState(initialPageSize);
+  const [totalCount, setTotalCount] = useState(initialTotalCount);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [statusFilter, setStatusFilter] = useState<"all" | SessionStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -80,6 +104,45 @@ export default function SessionsAdminClient({ initialSessions }: Props) {
       );
     });
   }, [sessions, searchQuery, statusFilter]);
+
+  async function loadPage(page: number) {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return;
+    }
+
+    setIsLoadingPage(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch(`/api/v1/admin/sessions?page=${page}&pageSize=${pageSize}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const payloadText = await response.text();
+      let payload: SessionsPagePayload | null = null;
+      try {
+        payload = payloadText ? (JSON.parse(payloadText) as SessionsPagePayload) : null;
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok || !payload) {
+        setErrorMessage(payload?.error?.message ?? "Failed to load sessions.");
+        return;
+      }
+
+      setSessions(payload.sessions);
+      setCurrentPage(payload.currentPage);
+      setTotalCount(payload.totalCount);
+      setTotalPages(payload.totalPages);
+    } catch {
+      setErrorMessage("Unable to reach the service.");
+    } finally {
+      setIsLoadingPage(false);
+    }
+  }
 
   async function handleRevoke(sessionId: string) {
     setIsSubmitting(true);
@@ -185,7 +248,7 @@ export default function SessionsAdminClient({ initialSessions }: Props) {
               </label>
             </div>
             <div className="font-mono text-[9px] text-slate-600">
-              {filteredSessions.length} of {sessions.length} sessions
+              Page {currentPage} of {totalPages} | Showing {filteredSessions.length} of {sessions.length} on this page | Total {totalCount}
             </div>
           </div>
 
@@ -206,6 +269,31 @@ export default function SessionsAdminClient({ initialSessions }: Props) {
 
         {/* ── Sessions list ── */}
         <section className="animate-fade-in-up delay-300 hud-panel rounded-none p-5">
+          <div className="mb-3 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => loadPage(currentPage - 1)}
+              disabled={isLoadingPage || currentPage <= 1}
+              className="border border-[#9fdd58]/10 bg-transparent px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:border-[#9fdd58]/30 hover:text-[#9fdd58] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => loadPage(currentPage + 1)}
+              disabled={isLoadingPage || currentPage >= totalPages}
+              className="border border-[#9fdd58]/10 bg-transparent px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:border-[#9fdd58]/30 hover:text-[#9fdd58] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+
+          {isLoadingPage ? (
+            <div className="mb-3 border border-[#9fdd58]/10 bg-[#050a0f]/50 p-3 font-mono text-[10px] text-slate-500">
+              Loading page...
+            </div>
+          ) : null}
+
           {filteredSessions.length === 0 ? (
             <div className="border border-dashed border-[#9fdd58]/10 bg-[#050a0f]/50 p-6 text-center">
               <p className="font-mono text-[10px] text-slate-500">No sessions match the current filters.</p>

@@ -33,17 +33,32 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const respond = (response: NextResponse) => withCors(request, response);
-  const authError = await requireAdmin(request);
-  if (authError) {
-    return respond(authError);
+  try {
+    const authError = await requireAdmin(request);
+    if (authError) {
+      return respond(authError);
+    }
+
+    const { searchParams } = new URL(request.url);
+    const pageParam = Number(searchParams.get("page"));
+    const pageSizeParam = Number(searchParams.get("pageSize"));
+
+    const sessions = await listSessionsWithUser({
+      page: Number.isFinite(pageParam) ? pageParam : undefined,
+      pageSize: Number.isFinite(pageSizeParam) ? pageSizeParam : undefined,
+    });
+    const now = new Date();
+
+    return respond(
+      NextResponse.json({
+        sessions: sessions.sessions.map((session) => toAdminSession(session, now)),
+        currentPage: sessions.currentPage,
+        pageSize: sessions.pageSize,
+        totalCount: sessions.totalCount,
+        totalPages: sessions.totalPages,
+      }),
+    );
+  } catch {
+    return respond(apiError(500, "internal_error", "Something went wrong."));
   }
-
-  const sessions = await listSessionsWithUser();
-  const now = new Date();
-
-  return respond(
-    NextResponse.json({
-      sessions: sessions.map((session) => toAdminSession(session, now)),
-    }),
-  );
 }

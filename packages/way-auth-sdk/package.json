@@ -35,7 +35,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "GUIDE.md"
   ],
   "scripts": {
     "build": "bunx tsc -p tsconfig.build.json",

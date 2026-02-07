@@ -419,6 +419,9 @@ const endpointGroups: EndpointGroup[] = [
         path: "/api/v1/admin/sessions",
         summary: "List refresh sessions with user metadata.",
         auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["cookie: way_refresh=<admin_refresh_session_cookie>"],
+        },
         response: JSON.stringify(
           {
             sessions: [
@@ -465,6 +468,9 @@ const endpointGroups: EndpointGroup[] = [
         path: "/api/v1/admin/sessions/:id",
         summary: "Revoke a refresh session by id.",
         auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["cookie: way_refresh=<admin_refresh_session_cookie>"],
+        },
         response: JSON.stringify(
           {
             session: {

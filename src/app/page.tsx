@@ -39,7 +39,9 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Image src="/way-asset-logo.png" alt="WAY Auth" width={28} height={28} className="h-7 w-7" />
             <span className="font-display text-sm tracking-widest text-[#9fdd58]/80">WAY Auth</span>
-            <div className="status-dot ml-2" />
+            <div className="status-dot ml-2" role="status" aria-label="Operational">
+              <span className="sr-only">Operational</span>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <Link
@@ -258,7 +260,9 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="status-dot" />
+            <div className="status-dot" role="status" aria-label="Operational">
+              <span className="sr-only">Operational</span>
+            </div>
             <span className="font-mono text-[10px] text-slate-600">All systems operational</span>
           </div>
         </footer>

@@ -5,8 +5,16 @@ import { toAdminSession } from "@/server/auth/session-admin";
 export const runtime = "nodejs";
 
 export default async function SessionsAdminPage() {
-  const sessions = await listSessionsWithUser();
+  const pagination = await listSessionsWithUser({ page: 1, pageSize: 50 });
   const now = new Date();
 
-  return <SessionsAdminClient initialSessions={sessions.map((session) => toAdminSession(session, now))} />;
+  return (
+    <SessionsAdminClient
+      initialSessions={pagination.sessions.map((session) => toAdminSession(session, now))}
+      initialCurrentPage={pagination.currentPage}
+      initialPageSize={pagination.pageSize}
+      initialTotalCount={pagination.totalCount}
+      initialTotalPages={pagination.totalPages}
+    />
+  );
 }

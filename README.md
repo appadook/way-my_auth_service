@@ -135,6 +135,7 @@ bunx way-auth-setup --base-url https://way-my-auth-service.vercel.app
 
 See:
 - `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/README.md`
+- `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/GUIDE.md`
 - `/Users/kurtik/code/public/way-my_auth_service/way-auth-setup-guide.md`
 
 SDK highlights:
