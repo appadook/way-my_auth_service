@@ -113,55 +113,52 @@ export default function CorsAdminClient({ initialOrigins }: Props) {
   }
 
   return (
-    <div className="min-h-screen px-5 py-8 text-slate-100 md:px-8 md:py-12">
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div className="grid-bg min-h-screen px-4 py-6 text-[#e0eaf3] md:px-6 md:py-8">
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-4">
         {/* ── Nav ── */}
-        <nav className="animate-fade-in-up glass flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3">
+        <nav className="animate-fade-in-up hud-panel flex flex-wrap items-center justify-between gap-3 rounded-none px-5 py-3">
           <div className="flex items-center gap-3">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={36} height={36} className="h-9 w-9" />
+            <Image src="/way-asset-logo.png" alt="WAY Auth" width={28} height={28} className="h-7 w-7" />
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Admin</p>
-              <p className="font-display text-base tracking-wide">CORS Origins</p>
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">Admin</p>
+              <p className="font-display text-sm tracking-widest">CORS Origins</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-            >
+          <div className="flex flex-wrap gap-1">
+            <Link href="/" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
               Home
             </Link>
-            <Link
-              href="/playground"
-              className="rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-            >
+            <Link href="/playground" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
               Playground
             </Link>
             <Link
               href="/admin/cors"
-              className="rounded-lg border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-2 text-xs font-semibold text-[#c8ef97]"
+              className="border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#9fdd58]"
             >
-              CORS Admin
+              CORS
+            </Link>
+            <Link href="/admin/sessions" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
+              Sessions
             </Link>
           </div>
         </nav>
 
         {/* ── Description ── */}
-        <div className="animate-fade-in-up delay-100 rounded-2xl border border-slate-600/15 bg-[linear-gradient(165deg,rgba(15,23,41,0.7),rgba(21,36,61,0.4))] p-6">
-          <p className="text-sm leading-relaxed text-slate-300/90">
+        <div className="animate-fade-in-up delay-100 border-l-2 border-[#9fdd58]/10 bg-[#0a1018]/90 py-2.5 pl-3 pr-3">
+          <p className="text-xs text-slate-500">
             Manage which external origins can call this auth service with credentials.
             Same-origin requests always work. Add origins for cross-origin browser clients.
           </p>
         </div>
 
         {/* ── Add origin ── */}
-        <section className="animate-fade-in-up delay-200 rounded-2xl border border-slate-600/15 bg-[linear-gradient(165deg,rgba(15,23,41,0.7),rgba(21,36,61,0.4))] p-6">
-          <h2 className="font-display flex items-center gap-3 text-xl tracking-wide text-[#c8ef97]">
-            <span className="h-5 w-1 rounded-full bg-[#9fdd58]/50" />
-            Add Origin
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">
-            Full origins only, e.g. <span className="rounded bg-slate-800/50 px-1.5 py-0.5 font-mono text-[11px] text-slate-300">https://app.example.com</span>
+        <section className="animate-fade-in-up delay-200 hud-panel rounded-none p-5">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-px bg-[#9fdd58]/40" />
+            <h2 className="font-display text-xs tracking-[0.2em] text-slate-300">Add Origin</h2>
+          </div>
+          <p className="mt-2 pl-[19px] font-mono text-[10px] text-slate-600">
+            Full origins only, e.g. <span className="text-slate-400">https://app.example.com</span>
           </p>
 
           <form onSubmit={handleAddOrigin} className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -169,62 +166,60 @@ export default function CorsAdminClient({ initialOrigins }: Props) {
               value={originInput}
               onChange={(event) => setOriginInput(event.target.value)}
               placeholder="https://app.example.com"
-              className="flex-1 rounded-xl border border-slate-600/30 bg-slate-950/50 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-[#9fdd58]/40 focus:shadow-[0_0_0_3px_rgba(159,221,88,0.08)]"
+              className="flex-1 border border-[#9fdd58]/10 bg-[#050a0f] px-4 py-2.5 font-mono text-xs text-[#e0eaf3] outline-none transition placeholder:text-slate-700 focus:border-[#9fdd58]/30"
             />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-[#9fdd58] px-6 py-3 text-sm font-semibold text-[#07101c] transition hover:bg-[#8ed14c] hover:shadow-[0_0_20px_rgba(159,221,88,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-[#9fdd58]/40 bg-[#9fdd58] px-6 py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#050a0f] transition hover:shadow-[0_0_20px_rgba(159,221,88,0.15)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Add origin
             </button>
           </form>
 
           {errorMessage ? (
-            <div className="animate-fade-in mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-950/20 px-4 py-3 text-sm text-red-200">
-              <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+            <div className="animate-fade-in mt-4 flex items-start gap-2 border-l-2 border-red-500/20 bg-red-950/10 py-2 pl-3 font-mono text-xs text-red-300">
+              <span className="font-bold text-red-400">ERR</span>
               {errorMessage}
             </div>
           ) : null}
 
           {successMessage ? (
-            <div className="animate-fade-in mt-4 flex items-start gap-2.5 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
-              <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+            <div className="animate-fade-in mt-4 flex items-start gap-2 border-l-2 border-emerald-500/20 bg-emerald-950/10 py-2 pl-3 font-mono text-xs text-emerald-300">
+              <span className="font-bold text-emerald-400">OK</span>
               {successMessage}
             </div>
           ) : null}
         </section>
 
         {/* ── Origins list ── */}
-        <section className="animate-fade-in-up delay-300 rounded-2xl border border-slate-600/15 bg-[linear-gradient(165deg,rgba(15,23,41,0.7),rgba(21,36,61,0.4))] p-6">
-          <h2 className="font-display flex items-center gap-3 text-xl tracking-wide text-[#c8ef97]">
-            <span className="h-5 w-1 rounded-full bg-[#9fdd58]/50" />
-            Allowed Origins
-          </h2>
+        <section className="animate-fade-in-up delay-300 hud-panel rounded-none p-5">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-px bg-[#9fdd58]/40" />
+            <h2 className="font-display text-xs tracking-[0.2em] text-slate-300">Allowed Origins</h2>
+            <span className="h-px flex-1 bg-[#9fdd58]/8" />
+            <span className="font-mono text-[9px] text-slate-600">
+              {sortedOrigins.length} origin{sortedOrigins.length !== 1 ? "s" : ""}
+            </span>
+          </div>
 
           {sortedOrigins.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-dashed border-slate-700/30 bg-slate-950/20 p-8 text-center">
-              <p className="text-sm text-slate-400">No origins added yet.</p>
-              <p className="mt-1 text-xs text-slate-500">
+            <div className="mt-5 border border-dashed border-[#9fdd58]/10 bg-[#050a0f]/50 p-6 text-center">
+              <p className="font-mono text-[10px] text-slate-500">No origins added yet.</p>
+              <p className="mt-1 font-mono text-[9px] text-slate-600">
                 Same-origin requests still work. Add external origins for cross-origin clients.
               </p>
             </div>
           ) : (
-            <ul className="mt-5 space-y-2">
+            <div className="mt-5 space-y-px">
               {sortedOrigins.map((origin) => (
-                <li
+                <div
                   key={origin.id}
-                  className="group flex flex-col gap-3 rounded-xl border border-slate-700/15 bg-slate-950/25 px-5 py-4 transition hover:border-slate-600/25 md:flex-row md:items-center md:justify-between"
+                  className="group flex flex-col gap-3 border border-[#9fdd58]/6 bg-[#050a0f]/60 px-4 py-3 transition hover:border-[#9fdd58]/12 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-sm text-slate-200">{origin.origin}</p>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="truncate font-mono text-xs text-slate-300">{origin.origin}</p>
+                    <p className="mt-1 font-mono text-[9px] text-slate-600">
                       Added {formatTimestamp(origin.createdAt)}
                     </p>
                   </div>
@@ -232,18 +227,14 @@ export default function CorsAdminClient({ initialOrigins }: Props) {
                     type="button"
                     onClick={() => handleRemoveOrigin(origin.id)}
                     disabled={isSubmitting}
-                    className="shrink-0 rounded-lg border border-slate-600/25 bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-400 transition hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="shrink-0 border border-[#9fdd58]/10 bg-transparent px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:border-red-500/25 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Remove
                   </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
-
-          <p className="mt-4 text-[11px] text-slate-500">
-            {sortedOrigins.length} origin{sortedOrigins.length !== 1 ? "s" : ""} configured
-          </p>
         </section>
       </main>
     </div>

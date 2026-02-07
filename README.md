@@ -73,6 +73,8 @@ bun run dev
 - `POST /api/v1/logout`
 - `GET /api/v1/me`
 - `GET /api/v1/jwks`
+- `GET /api/v1/admin/sessions` (admin only)
+- `DELETE /api/v1/admin/sessions/:id` (admin only)
 
 ## Cookies & Sessions
 
@@ -86,6 +88,7 @@ bun run dev
 - `/login` is the internal sign-in UI.
 - `/playground` is protected.
 - `/admin/cors` is protected and admin-only.
+- `/admin/sessions` is protected and admin-only.
 - Any page under `src/app/(protected)` is guarded server-side by refresh session validation.
 
 ## Browser Playground
@@ -132,7 +135,13 @@ bunx way-auth-setup --base-url https://way-my-auth-service.vercel.app
 
 See:
 - `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/README.md`
+- `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/GUIDE.md`
 - `/Users/kurtik/code/public/way-my_auth_service/way-auth-setup-guide.md`
+
+SDK highlights:
+- `signupWithConfirm` for client-side password confirmation
+- `useWayAuthCallbacks` for post-login/signup redirects
+- `getWayAuthErrorMessage` for consistent UX messaging
 
 ## CORS Notes
 

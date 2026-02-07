@@ -1,11 +1,10 @@
+import { getWayAuthErrorMessage } from "./errors";
+import { validatePasswordConfirmation } from "./validation";
 function nowIso() {
     return new Date().toISOString();
 }
 function toErrorMessage(error) {
-    if (error instanceof Error) {
-        return error.message;
-    }
-    return "Unexpected authentication error.";
+    return getWayAuthErrorMessage(error, "Unexpected authentication error.");
 }
 function getDefaultState() {
     return {
@@ -22,6 +21,7 @@ export function createWayAuthState(client, options = {}) {
         ...options.initialState,
     };
     const listeners = new Set();
+    let callbacks = options.callbacks ?? {};
     function emit() {
         for (const listener of listeners) {
             listener();
@@ -59,8 +59,9 @@ export function createWayAuthState(client, options = {}) {
             setAuthenticated(me.user);
             return state;
         }
-        catch {
+        catch (error) {
             setUnauthenticated();
+            callbacks.onAuthError?.(error, "bootstrap");
             return state;
         }
     }
@@ -69,6 +70,7 @@ export function createWayAuthState(client, options = {}) {
         try {
             const result = await client.signup(input);
             setAuthenticated(result.user);
+            callbacks.onSignupSuccess?.(state, result.user);
             return state;
         }
         catch (error) {
@@ -78,14 +80,32 @@ export function createWayAuthState(client, options = {}) {
                 user: null,
                 initialized: true,
             });
+            callbacks.onAuthError?.(error, "signup");
             throw error;
         }
+    }
+    async function signupWithConfirm(input) {
+        const validation = validatePasswordConfirmation(input);
+        if (!validation.ok) {
+            const error = new Error(validation.message);
+            patchState({
+                status: "error",
+                errorMessage: validation.message,
+                user: null,
+                initialized: true,
+            });
+            callbacks.onAuthError?.(error, "signup");
+            throw error;
+        }
+        const { confirmPassword: _confirmPassword, ...payload } = input;
+        return signup(payload);
     }
     async function login(input) {
         patchState({ status: "loading", errorMessage: null });
         try {
             const result = await client.login(input);
             setAuthenticated(result.user);
+            callbacks.onLoginSuccess?.(state, result.user);
             return state;
         }
         catch (error) {
@@ -95,6 +115,7 @@ export function createWayAuthState(client, options = {}) {
                 user: null,
                 initialized: true,
             });
+            callbacks.onAuthError?.(error, "login");
             throw error;
         }
     }
@@ -111,6 +132,7 @@ export function createWayAuthState(client, options = {}) {
             patchState({
                 errorMessage: toErrorMessage(error),
             });
+            callbacks.onAuthError?.(error, "refresh");
             throw error;
         }
     }
@@ -128,6 +150,7 @@ export function createWayAuthState(client, options = {}) {
                 initialized: true,
                 errorMessage: toErrorMessage(error),
             });
+            callbacks.onAuthError?.(error, "me");
             throw error;
         }
     }
@@ -138,6 +161,7 @@ export function createWayAuthState(client, options = {}) {
         }
         finally {
             setUnauthenticated();
+            callbacks.onLogout?.(state);
         }
         return state;
     }
@@ -150,6 +174,9 @@ export function createWayAuthState(client, options = {}) {
     function getState() {
         return state;
     }
+    function setCallbacks(nextCallbacks = {}) {
+        callbacks = nextCallbacks;
+    }
     function subscribe(listener) {
         listeners.add(listener);
         return () => listeners.delete(listener);
@@ -157,8 +184,10 @@ export function createWayAuthState(client, options = {}) {
     return {
         getState,
         subscribe,
+        setCallbacks,
         bootstrap,
         signup,
+        signupWithConfirm,
         login,
         refresh,
         me,
