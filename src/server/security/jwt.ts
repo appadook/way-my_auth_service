@@ -11,6 +11,7 @@ import {
 import { env } from "@/lib/env";
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const NORMALIZED_JWT_ISSUER = env.JWT_ISSUER.trim().replace(/\/+$/, "");
 
 let privateKeyPromise: Promise<CryptoKey> | undefined;
 let publicKeyPromise: Promise<CryptoKey> | undefined;
@@ -73,7 +74,7 @@ export async function signAccessToken(input: SignAccessTokenInput): Promise<{
   const accessToken = await new SignJWT({ sid: input.sessionId })
     .setProtectedHeader({ alg: "RS256", typ: "JWT", kid })
     .setSubject(input.userId)
-    .setIssuer(env.JWT_ISSUER)
+    .setIssuer(NORMALIZED_JWT_ISSUER)
     .setAudience(env.JWT_AUDIENCE)
     .setIssuedAt()
     .setJti(randomUUID())
@@ -88,7 +89,7 @@ export async function signAccessToken(input: SignAccessTokenInput): Promise<{
 
 export async function verifyAccessToken(token: string): Promise<VerifyAccessTokenResult> {
   const result = await jwtVerify(token, await getPublicKey(), {
-    issuer: env.JWT_ISSUER,
+    issuer: NORMALIZED_JWT_ISSUER,
     audience: env.JWT_AUDIENCE,
   });
 

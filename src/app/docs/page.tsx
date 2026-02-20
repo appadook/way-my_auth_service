@@ -289,6 +289,52 @@ const endpointGroups: EndpointGroup[] = [
           ),
         },
       },
+      {
+        id: "discovery",
+        name: "Discovery configuration",
+        method: "GET",
+        path: "/.well-known/way-auth-configuration",
+        summary: "Fetch issuer, audience, JWKS URL, and endpoint URLs for SDK auto-configuration.",
+        auth: "None.",
+        response: JSON.stringify(
+          {
+            version: "1",
+            issuer: "https://way-my-auth-service.vercel.app",
+            audience: "way-clients",
+            jwks_url: "https://way-my-auth-service.vercel.app/api/v1/jwks",
+            endpoints: {
+              signup: "https://way-my-auth-service.vercel.app/api/v1/signup",
+              login: "https://way-my-auth-service.vercel.app/api/v1/login",
+              refresh: "https://way-my-auth-service.vercel.app/api/v1/refresh",
+              logout: "https://way-my-auth-service.vercel.app/api/v1/logout",
+              me: "https://way-my-auth-service.vercel.app/api/v1/me",
+            },
+          },
+          null,
+          2,
+        ),
+        errors: [],
+        example: {
+          request: "curl https://way-my-auth-service.vercel.app/.well-known/way-auth-configuration",
+          response: JSON.stringify(
+            {
+              version: "1",
+              issuer: "https://way-my-auth-service.vercel.app",
+              audience: "way-clients",
+              jwks_url: "https://way-my-auth-service.vercel.app/api/v1/jwks",
+              endpoints: {
+                signup: "https://way-my-auth-service.vercel.app/api/v1/signup",
+                login: "https://way-my-auth-service.vercel.app/api/v1/login",
+                refresh: "https://way-my-auth-service.vercel.app/api/v1/refresh",
+                logout: "https://way-my-auth-service.vercel.app/api/v1/logout",
+                me: "https://way-my-auth-service.vercel.app/api/v1/me",
+              },
+            },
+            null,
+            2,
+          ),
+        },
+      },
     ],
   },
   {

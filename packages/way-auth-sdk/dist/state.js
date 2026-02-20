@@ -97,7 +97,10 @@ export function createWayAuthState(client, options = {}) {
             callbacks.onAuthError?.(error, "signup");
             throw error;
         }
-        const { confirmPassword: _confirmPassword, ...payload } = input;
+        const payload = {
+            email: input.email,
+            password: input.password,
+        };
         return signup(payload);
     }
     async function login(input) {

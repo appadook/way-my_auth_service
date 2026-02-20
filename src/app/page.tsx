@@ -9,6 +9,12 @@ export default function Home() {
     { method: "POST", path: "/api/v1/logout", desc: "Revoke session", status: "operational" },
     { method: "GET", path: "/api/v1/me", desc: "Current user", status: "operational" },
     { method: "GET", path: "/api/v1/jwks", desc: "Public keys", status: "operational" },
+    {
+      method: "GET",
+      path: "/.well-known/way-auth-configuration",
+      desc: "Discovery config",
+      status: "operational",
+    },
   ];
 
   const specs = [

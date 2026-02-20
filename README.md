@@ -73,6 +73,7 @@ bun run dev
 - `POST /api/v1/logout`
 - `GET /api/v1/me`
 - `GET /api/v1/jwks`
+- `GET /.well-known/way-auth-configuration`
 - `GET /api/v1/admin/sessions` (admin only)
 - `DELETE /api/v1/admin/sessions/:id` (admin only)
 
@@ -121,16 +122,28 @@ Install in another local project without publishing:
 bun add ../way-my_auth_service/packages/way-auth-sdk
 ```
 
-Generate a consumer `.env.local` and `way-auth-setup-guide.md`:
+Generate a Next.js-first setup with minimal config:
 
 ```bash
-bunx way-auth-setup
+bunx way-auth-setup --framework next --minimal
 ```
 
-Defaults to the deployed auth domain. Override if needed:
+This generates:
+- `src/lib/auth.ts`
+- `middleware.ts`
+- merged `.env.local`
+- `way-auth-setup-guide.md`
+
+For baseline integration, only one env var is required:
 
 ```bash
-bunx way-auth-setup --base-url https://way-my-auth-service.vercel.app
+WAY_AUTH_BASE_URL="https://way-my-auth-service.vercel.app"
+```
+
+Override the base URL when needed:
+
+```bash
+bunx way-auth-setup --framework next --minimal --base-url https://way-my-auth-service.vercel.app
 ```
 
 See:
@@ -139,9 +152,10 @@ See:
 - `/Users/kurtik/code/public/way-my_auth_service/way-auth-setup-guide.md`
 
 SDK highlights:
-- `signupWithConfirm` for client-side password confirmation
-- `useWayAuthCallbacks` for post-login/signup redirects
-- `getWayAuthErrorMessage` for consistent UX messaging
+- `createWayAuthNext()` single-object Next.js integration
+- built-in middleware and matcher defaults
+- discovery-driven config from `/.well-known/way-auth-configuration`
+- `auth.client.bootstrapSession()` and `auth.server.getSession()`
 
 ## CORS Notes
 

@@ -138,7 +138,10 @@ export function createWayAuthState(client: WayAuthClient, options: WayAuthStateO
       throw error;
     }
 
-    const { confirmPassword: _confirmPassword, ...payload } = input;
+    const payload: WayAuthCredentialInput = {
+      email: input.email,
+      password: input.password,
+    };
     return signup(payload);
   }
 
