@@ -40,7 +40,10 @@ JWT_PRIVATE_KEY=""
 JWT_PUBLIC_KEY=""
 JWT_ISSUER=""
 JWT_AUDIENCE=""
+ACCESS_TOKEN_TTL_SECONDS="900"
 REFRESH_COOKIE_NAME="way_refresh"
+REFRESH_COOKIE_DOMAIN=""
+REFRESH_COOKIE_SAME_SITE="lax"
 ADMIN_EMAILS="admin@example.com"
 SIGNUP_SECRET=""
 ```
@@ -49,6 +52,9 @@ Notes:
 - `DATABASE_URL`: pooled Neon URL (runtime)
 - `DIRECT_URL`: non-pooled Neon URL (migrations)
 - `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: PEM values (escaped `\n` supported). Raw base64 key bodies are also accepted and normalized to PEM at runtime.
+- `ACCESS_TOKEN_TTL_SECONDS`: access token lifetime in seconds (default `900`).
+- `REFRESH_COOKIE_DOMAIN`: optional shared cookie domain (e.g. `.example.com`) for multi-subdomain setups.
+- `REFRESH_COOKIE_SAME_SITE`: `lax` (default), `strict`, or `none`. Use `none` for cross-origin credentialed browser flows (requires HTTPS).
 - `ADMIN_EMAILS`: comma-separated list of admin emails allowed to access the CORS admin UI.
 - `SIGNUP_SECRET`: shared secret required for `POST /api/v1/signup`. Clients must send `x-way-signup-secret`.
 
@@ -161,10 +167,16 @@ SDK highlights:
 - built-in middleware and matcher defaults
 - discovery-driven config from `/.well-known/way-auth-configuration`
 - `auth.client.bootstrapSession()` and `auth.server.getSession()`
+- `auth.client.startSessionKeepAlive()` for long-lived browser tabs
 
 ## CORS Notes
 
 If your frontend runs on a different origin, add it in the CORS admin UI at `/admin/cors`. The origin list is stored in the database and can be updated without redeploying.
+
+For cross-origin browser sessions, also configure refresh-cookie behavior:
+- set `REFRESH_COOKIE_SAME_SITE="none"`
+- ensure HTTPS in production
+- optionally set `REFRESH_COOKIE_DOMAIN` for shared-subdomain cookie scope
 
 ## Deployment (Vercel)
 

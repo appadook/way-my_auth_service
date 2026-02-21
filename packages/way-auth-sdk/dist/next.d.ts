@@ -55,8 +55,12 @@ export declare function createWayAuthNext(options?: WayAuthNextOptions): {
     client: {
         login: (input: WayAuthCredentialInput) => Promise<import("./types").WayAuthLoginResponse>;
         signup: (input: WayAuthCredentialInput) => Promise<import("./types").WayAuthSignupResponse>;
+        refresh: () => Promise<import("./types").WayAuthTokenResponse>;
         logout: () => Promise<import("./types").WayAuthLogoutResponse>;
         bootstrapSession: () => Promise<WayAuthBootstrapResult>;
+        startSessionKeepAlive: (options?: {
+            intervalMs?: number;
+        }) => () => void;
     };
     server: {
         getSession: (request: Request, sessionOptions?: WayAuthNextSessionOptions) => Promise<WayAuthNextSession | null>;

@@ -11,8 +11,11 @@ const envSchema = z.object({
   JWT_ISSUER: z.string().min(1),
   JWT_AUDIENCE: z.string().min(1),
   REFRESH_COOKIE_NAME: z.string().min(1),
+  REFRESH_COOKIE_DOMAIN: z.string().default(""),
+  REFRESH_COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   ADMIN_EMAILS: z.string().default(""),
   SIGNUP_SECRET: z.string().default(""),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(60 * 60 * 24).default(15 * 60),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

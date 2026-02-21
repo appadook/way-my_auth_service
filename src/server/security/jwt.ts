@@ -10,7 +10,7 @@ import {
 } from "jose";
 import { env } from "@/lib/env";
 
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const ACCESS_TOKEN_TTL_SECONDS = env.ACCESS_TOKEN_TTL_SECONDS;
 const NORMALIZED_JWT_ISSUER = env.JWT_ISSUER.trim().replace(/\/+$/, "");
 
 let privateKeyPromise: Promise<CryptoKey> | undefined;

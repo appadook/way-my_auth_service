@@ -62,6 +62,7 @@ export type WayAuthBootstrapResult =
     };
 
 const DEFAULT_ACCESS_TOKEN_COOKIE_NAME = "way_access_token";
+const DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS = 15 * 60;
 const DEFAULT_MIDDLEWARE_OPTIONS: WayAuthNextMiddlewareOptions = {
   adminPrefix: "/admin",
   publicPaths: ["/admin/login", "/admin/signup"],
@@ -135,13 +136,13 @@ function parseCookieValue(cookieHeader: string | null, cookieName: string): stri
   return null;
 }
 
-function setAccessTokenCookie(cookieName: string, token: string): void {
+function setAccessTokenCookie(cookieName: string, token: string, maxAgeSeconds: number): void {
   if (typeof document === "undefined") {
     return;
   }
 
   const secureAttribute = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${cookieName}=${encodeURIComponent(token)}; Path=/; Max-Age=900; SameSite=Lax${secureAttribute}`;
+  document.cookie = `${cookieName}=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secureAttribute}`;
 }
 
 function clearAccessTokenCookie(cookieName: string): void {
@@ -232,6 +233,7 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
   const middlewareOptions = resolveMiddlewareOptions(options);
   const defaultHydrationStrategy = options.hydrationStrategy ?? "best-effort";
   const tokenStore = createInMemoryTokenStore();
+  let accessTokenCookieMaxAgeSeconds = DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS;
 
   const resolvedConfigPromise = resolveWayAuthConfig({
     ...options,
@@ -280,7 +282,7 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
   async function syncAccessTokenCookieFromStore() {
     const token = await tokenStore.getAccessToken();
     if (token) {
-      setAccessTokenCookie(accessTokenCookieName, token);
+      setAccessTokenCookie(accessTokenCookieName, token, accessTokenCookieMaxAgeSeconds);
       return;
     }
 
@@ -418,6 +420,10 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
   async function login(input: WayAuthCredentialInput) {
     const client = await getClient();
     const result = await client.login(input);
+    accessTokenCookieMaxAgeSeconds =
+      typeof result.expiresIn === "number" && Number.isFinite(result.expiresIn) && result.expiresIn > 0
+        ? Math.floor(result.expiresIn)
+        : DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS;
     await syncAccessTokenCookieFromStore();
     return result;
   }
@@ -425,6 +431,21 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
   async function signup(input: WayAuthCredentialInput) {
     const client = await getClient();
     const result = await client.signup(input);
+    accessTokenCookieMaxAgeSeconds =
+      typeof result.expiresIn === "number" && Number.isFinite(result.expiresIn) && result.expiresIn > 0
+        ? Math.floor(result.expiresIn)
+        : DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS;
+    await syncAccessTokenCookieFromStore();
+    return result;
+  }
+
+  async function refresh() {
+    const client = await getClient();
+    const result = await client.refresh();
+    accessTokenCookieMaxAgeSeconds =
+      typeof result.expiresIn === "number" && Number.isFinite(result.expiresIn) && result.expiresIn > 0
+        ? Math.floor(result.expiresIn)
+        : DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS;
     await syncAccessTokenCookieFromStore();
     return result;
   }
@@ -439,7 +460,11 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
   async function bootstrapSession(): Promise<WayAuthBootstrapResult> {
     const client = await getClient();
     try {
-      await client.refresh();
+      const refreshed = await client.refresh();
+      accessTokenCookieMaxAgeSeconds =
+        typeof refreshed.expiresIn === "number" && Number.isFinite(refreshed.expiresIn) && refreshed.expiresIn > 0
+          ? Math.floor(refreshed.expiresIn)
+          : DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS;
       const me = await client.me();
       await syncAccessTokenCookieFromStore();
       return {
@@ -457,14 +482,44 @@ export function createWayAuthNext(options: WayAuthNextOptions = {}) {
     }
   }
 
+  function startSessionKeepAlive(options: { intervalMs?: number } = {}) {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return () => {};
+    }
+
+    const intervalMs = options.intervalMs ?? 5 * 60 * 1_000;
+
+    const runRefresh = () => {
+      void refresh().catch(() => {
+        // Keep-alive should be best-effort and never throw in global listeners.
+      });
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        runRefresh();
+      }
+    };
+
+    const intervalId = window.setInterval(runRefresh, intervalMs);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }
+
   return {
     middleware,
     matcher: middlewareOptions.matcher,
     client: {
       login,
       signup,
+      refresh,
       logout,
       bootstrapSession,
+      startSessionKeepAlive,
     },
     server: {
       getSession,

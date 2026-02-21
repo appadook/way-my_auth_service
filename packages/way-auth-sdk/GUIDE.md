@@ -50,8 +50,10 @@ Returned API:
 - `auth.matcher`
 - `auth.client.login()`
 - `auth.client.signup()`
+- `auth.client.refresh()`
 - `auth.client.logout()`
 - `auth.client.bootstrapSession()`
+- `auth.client.startSessionKeepAlive()`
 - `auth.server.getSession()`
 - `auth.server.requireSession()`
 - `auth.errors.toUiError()`
@@ -86,6 +88,10 @@ Discovery modes:
 - `never`
 
 ## 7. Troubleshooting
+
+Session persistence tip:
+- Call `auth.client.bootstrapSession()` during app startup in client code.
+- For long-lived tabs, call `auth.client.startSessionKeepAlive()` (for example every 5 minutes) so access-token cookie state is refreshed without forcing re-login.
 
 ### Redirect loops
 - Verify generated `middleware.ts` is active.

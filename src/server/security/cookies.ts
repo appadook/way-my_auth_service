@@ -7,30 +7,38 @@ export function getRefreshTokenFromRequest(request: NextRequest): string | null 
   return request.cookies.get(env.REFRESH_COOKIE_NAME)?.value ?? null;
 }
 
+function buildRefreshCookieOptions(maxAge: number) {
+  const secure = env.NODE_ENV === "production" || env.REFRESH_COOKIE_SAME_SITE === "none";
+
+  return {
+    name: env.REFRESH_COOKIE_NAME,
+    httpOnly: true,
+    secure,
+    sameSite: env.REFRESH_COOKIE_SAME_SITE,
+    path: "/",
+    maxAge,
+    ...(env.REFRESH_COOKIE_DOMAIN.trim()
+      ? {
+          domain: env.REFRESH_COOKIE_DOMAIN.trim(),
+        }
+      : {}),
+  } as const;
+}
+
 export function setRefreshTokenCookie(
   response: NextResponse,
   refreshToken: string,
   maxAge: number = REFRESH_TOKEN_TTL_SECONDS,
 ): void {
   response.cookies.set({
-    name: env.REFRESH_COOKIE_NAME,
+    ...buildRefreshCookieOptions(maxAge),
     value: refreshToken,
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge,
   });
 }
 
 export function clearRefreshTokenCookie(response: NextResponse): void {
   response.cookies.set({
-    name: env.REFRESH_COOKIE_NAME,
+    ...buildRefreshCookieOptions(0),
     value: "",
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
   });
 }

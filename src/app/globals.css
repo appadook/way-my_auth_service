@@ -6,6 +6,9 @@
   --surface: #0a1018;
   --surface-raised: #0e1620;
   --surface-muted: #111d2a;
+  --font-geist-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-geist-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-display: "Arial Narrow", "Avenir Next Condensed", "Franklin Gothic Medium", sans-serif;
   --brand-green: #9fdd58;
   --brand-green-dim: #6ba832;
   --brand-green-glow: rgba(159, 221, 88, 0.35);
