@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import TopNav from "@/components/top-nav";
 
 type CorsOriginItem = {
   id: string;
@@ -115,33 +114,7 @@ export default function CorsAdminClient({ initialOrigins }: Props) {
   return (
     <div className="grid-bg min-h-screen px-4 py-6 text-[#e0eaf3] md:px-6 md:py-8">
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-        {/* ── Nav ── */}
-        <nav className="animate-fade-in-up hud-panel flex flex-wrap items-center justify-between gap-3 rounded-none px-5 py-3">
-          <div className="flex items-center gap-3">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={28} height={28} className="h-7 w-7" />
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">Admin</p>
-              <p className="font-display text-sm tracking-widest">CORS Origins</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            <Link href="/" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
-              Home
-            </Link>
-            <Link href="/playground" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
-              Playground
-            </Link>
-            <Link
-              href="/admin/cors"
-              className="border border-[#9fdd58]/25 bg-[#9fdd58]/8 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#9fdd58]"
-            >
-              CORS
-            </Link>
-            <Link href="/admin/sessions" className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]">
-              Sessions
-            </Link>
-          </div>
-        </nav>
+        <TopNav className="animate-fade-in-up" />
 
         {/* ── Description ── */}
         <div className="animate-fade-in-up delay-100 border-l-2 border-[#9fdd58]/10 bg-[#0a1018]/90 py-2.5 pl-3 pr-3">

@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import TopNav from "@/components/top-nav";
 
 function normalizeRedirect(target: string | null): string | null {
   if (!target) {
@@ -85,29 +84,16 @@ function LoginForm() {
   }
 
   return (
-    <div className="grid-bg flex min-h-screen items-center justify-center px-4 py-10 text-[#e0eaf3]">
+    <div className="grid-bg min-h-screen px-4 py-6 text-[#e0eaf3] md:px-6 md:py-8">
       {/* Ambient glow */}
       <div className="animate-glow-pulse pointer-events-none fixed left-1/2 top-0 h-[400px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#9fdd58]/5 blur-[120px]" />
 
-      <main className="animate-fade-in-up relative mx-auto w-full max-w-[440px]">
-        {/* Back nav */}
-        <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-2.5">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={24} height={24} className="h-6 w-6" />
-            <span className="font-display text-xs tracking-widest text-slate-400 transition group-hover:text-[#9fdd58]">
-              WAY Auth
-            </span>
-          </Link>
-          <Link
-            href="/"
-            className="font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-[#9fdd58]"
-          >
-            &larr; Back
-          </Link>
-        </div>
+      <main className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col gap-6">
+        <TopNav className="animate-fade-in-up" />
 
         {/* Login card */}
-        <div className="hud-panel relative rounded-none p-7">
+        <div className="animate-fade-in-up delay-100 mx-auto w-full max-w-[440px]">
+          <div className="hud-panel relative rounded-none p-7">
           {/* Top accent */}
           <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-[#9fdd58]/30 to-transparent" />
 
@@ -201,9 +187,10 @@ function LoginForm() {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Footer */}
-        <p className="animate-fade-in delay-200 mt-4 text-center font-mono text-[9px] uppercase tracking-widest text-slate-600">
+        <p className="animate-fade-in delay-200 text-center font-mono text-[9px] uppercase tracking-widest text-slate-600">
           HttpOnly refresh cookie &middot; Session-based auth
         </p>
       </main>

@@ -11,12 +11,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const refreshToken = cookieStore.get(env.REFRESH_COOKIE_NAME)?.value;
 
   if (!refreshToken) {
-    redirect("/login?next=/admin/cors");
+    redirect("/login?next=/admin/users");
   }
 
   const validation = await validateRefreshSession(refreshToken);
   if (!validation.ok) {
-    redirect("/login?next=/admin/cors");
+    redirect("/login?next=/admin/users");
   }
 
   if (!isAdminEmail(validation.data.user.email)) {

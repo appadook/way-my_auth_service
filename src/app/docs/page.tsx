@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import TopNav from "@/components/top-nav";
 
 export const metadata: Metadata = {
   title: "API Docs",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 type Endpoint = {
   id: string;
   name: string;
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   path: string;
   summary: string;
   auth: string;
@@ -339,8 +340,8 @@ const endpointGroups: EndpointGroup[] = [
   },
   {
     id: "admin-group",
-    title: "Admin: CORS Origins",
-    description: "Manage allowed cross-origin apps via admin-only routes.",
+    title: "Admin: Users, CORS, Sessions",
+    description: "Manage users, allowed cross-origin apps, and refresh sessions via admin-only routes.",
     endpoints: [
       {
         id: "cors-list",
@@ -456,6 +457,208 @@ const endpointGroups: EndpointGroup[] = [
         example: {
           request: "curl -X DELETE https://way-my-auth-service.vercel.app/api/v1/admin/cors/origin_123",
           response: JSON.stringify({ success: true }, null, 2),
+        },
+      },
+      {
+        id: "users-list",
+        name: "List users",
+        method: "GET",
+        path: "/api/v1/admin/users",
+        summary: "List enrolled users with pagination.",
+        auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["cookie: way_refresh=<admin_refresh_session_cookie>"],
+        },
+        response: JSON.stringify(
+          {
+            users: [
+              {
+                id: "user_123",
+                email: "you@example.com",
+                createdAt: "2025-01-01T12:00:00.000Z",
+                updatedAt: "2025-01-01T12:00:00.000Z",
+              },
+            ],
+            currentPage: 1,
+            pageSize: 50,
+            totalCount: 1,
+            totalPages: 1,
+          },
+          null,
+          2,
+        ),
+        errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden"],
+        example: {
+          request: "curl https://way-my-auth-service.vercel.app/api/v1/admin/users",
+          response: JSON.stringify(
+            {
+              users: [
+                {
+                  id: "user_123",
+                  email: "you@example.com",
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                  updatedAt: "2025-01-01T12:00:00.000Z",
+                },
+              ],
+              currentPage: 1,
+              pageSize: 50,
+              totalCount: 1,
+              totalPages: 1,
+            },
+            null,
+            2,
+          ),
+        },
+      },
+      {
+        id: "users-create",
+        name: "Create user",
+        method: "POST",
+        path: "/api/v1/admin/users",
+        summary: "Create a user credential directly from admin.",
+        auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["content-type: application/json", "cookie: way_refresh=<admin_refresh_session_cookie>"],
+          body: JSON.stringify(
+            {
+              email: "you@example.com",
+              password: "strong-password",
+            },
+            null,
+            2,
+          ),
+        },
+        response: JSON.stringify(
+          {
+            user: {
+              id: "user_123",
+              email: "you@example.com",
+              createdAt: "2025-01-01T12:00:00.000Z",
+              updatedAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+          null,
+          2,
+        ),
+        errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden", "invalid_input", "email_taken"],
+        example: {
+          request: [
+            "curl -X POST https://way-my-auth-service.vercel.app/api/v1/admin/users \\",
+            "  -H 'content-type: application/json' \\",
+            "  -d '{\"email\":\"you@example.com\",\"password\":\"strong-password\"}'",
+          ].join("\n"),
+          response: JSON.stringify(
+            {
+              user: {
+                id: "user_123",
+                email: "you@example.com",
+                createdAt: "2025-01-01T12:00:00.000Z",
+                updatedAt: "2025-01-01T12:00:00.000Z",
+              },
+            },
+            null,
+            2,
+          ),
+        },
+      },
+      {
+        id: "users-update",
+        name: "Update user credentials",
+        method: "PATCH",
+        path: "/api/v1/admin/users/:id",
+        summary: "Update a user's email and/or password.",
+        auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["content-type: application/json", "cookie: way_refresh=<admin_refresh_session_cookie>"],
+          body: JSON.stringify(
+            {
+              email: "updated@example.com",
+              password: "new-strong-password",
+            },
+            null,
+            2,
+          ),
+        },
+        response: JSON.stringify(
+          {
+            user: {
+              id: "user_123",
+              email: "updated@example.com",
+              createdAt: "2025-01-01T12:00:00.000Z",
+              updatedAt: "2025-01-02T12:00:00.000Z",
+            },
+          },
+          null,
+          2,
+        ),
+        errors: [
+          "missing_refresh_token",
+          "invalid_refresh_token",
+          "forbidden",
+          "invalid_input",
+          "invalid_user_id",
+          "user_not_found",
+          "email_taken",
+        ],
+        example: {
+          request: [
+            "curl -X PATCH https://way-my-auth-service.vercel.app/api/v1/admin/users/user_123 \\",
+            "  -H 'content-type: application/json' \\",
+            "  -d '{\"email\":\"updated@example.com\"}'",
+          ].join("\n"),
+          response: JSON.stringify(
+            {
+              user: {
+                id: "user_123",
+                email: "updated@example.com",
+                createdAt: "2025-01-01T12:00:00.000Z",
+                updatedAt: "2025-01-02T12:00:00.000Z",
+              },
+            },
+            null,
+            2,
+          ),
+        },
+      },
+      {
+        id: "users-delete",
+        name: "Delete user",
+        method: "DELETE",
+        path: "/api/v1/admin/users/:id",
+        summary: "Delete a user and cascade-delete their sessions.",
+        auth: "Admin refresh session cookie.",
+        request: {
+          headers: ["cookie: way_refresh=<admin_refresh_session_cookie>"],
+        },
+        response: JSON.stringify(
+          {
+            success: true,
+            user: {
+              id: "user_123",
+              email: "you@example.com",
+              createdAt: "2025-01-01T12:00:00.000Z",
+              updatedAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+          null,
+          2,
+        ),
+        errors: ["missing_refresh_token", "invalid_refresh_token", "forbidden", "invalid_user_id", "user_not_found"],
+        example: {
+          request: "curl -X DELETE https://way-my-auth-service.vercel.app/api/v1/admin/users/user_123",
+          response: JSON.stringify(
+            {
+              success: true,
+              user: {
+                id: "user_123",
+                email: "you@example.com",
+                createdAt: "2025-01-01T12:00:00.000Z",
+                updatedAt: "2025-01-01T12:00:00.000Z",
+              },
+            },
+            null,
+            2,
+          ),
         },
       },
       {
@@ -581,7 +784,9 @@ function MethodBadge({ method }: { method: Endpoint["method"] }) {
       ? "text-sky-400 border-sky-500/20"
       : method === "POST"
         ? "text-emerald-400 border-emerald-500/20"
-        : "text-rose-400 border-rose-500/20";
+        : method === "PATCH"
+          ? "text-amber-400 border-amber-500/20"
+          : "text-rose-400 border-rose-500/20";
 
   return (
     <span className={`border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider ${styles}`}>
@@ -637,8 +842,10 @@ export default function DocsPage() {
   return (
     <div className="grid-bg min-h-screen px-4 py-6 text-[#e0eaf3] md:px-6 md:py-8">
       <main className="mx-auto w-full max-w-6xl space-y-4">
+        <TopNav className="animate-fade-in-up" />
+
         {/* ── Header ── */}
-        <header className="animate-fade-in-up hud-panel grid-bg-dense rounded-none p-6 md:p-8">
+        <header className="animate-fade-in-up delay-100 hud-panel grid-bg-dense rounded-none p-6 md:p-8">
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <Image

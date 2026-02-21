@@ -74,6 +74,10 @@ bun run dev
 - `GET /api/v1/me`
 - `GET /api/v1/jwks`
 - `GET /.well-known/way-auth-configuration`
+- `GET /api/v1/admin/users` (admin only)
+- `POST /api/v1/admin/users` (admin only)
+- `PATCH /api/v1/admin/users/:id` (admin only)
+- `DELETE /api/v1/admin/users/:id` (admin only)
 - `GET /api/v1/admin/sessions` (admin only)
 - `DELETE /api/v1/admin/sessions/:id` (admin only)
 
@@ -90,6 +94,7 @@ bun run dev
 - `/playground` is protected.
 - `/admin/cors` is protected and admin-only.
 - `/admin/sessions` is protected and admin-only.
+- `/admin/users` is protected and admin-only.
 - Any page under `src/app/(protected)` is guarded server-side by refresh session validation.
 
 ## Browser Playground

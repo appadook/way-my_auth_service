@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import TopNav from "@/components/top-nav";
 
 export default function Home() {
   const endpoints = [
@@ -40,36 +41,7 @@ export default function Home() {
       <div className="animate-glow-pulse delay-500 pointer-events-none fixed bottom-0 right-0 h-[500px] w-[500px] translate-x-1/3 translate-y-1/3 rounded-full bg-[#3a5f95]/10 blur-[120px]" />
 
       <main className="mx-auto w-full max-w-6xl space-y-4">
-        {/* ── Top bar ── */}
-        <nav className="animate-fade-in-up hud-panel flex items-center justify-between rounded-none px-5 py-3">
-          <div className="flex items-center gap-3">
-            <Image src="/way-asset-logo.png" alt="WAY Auth" width={28} height={28} className="h-7 w-7" />
-            <span className="font-display text-sm tracking-widest text-[#9fdd58]/80">WAY Auth</span>
-            <div className="status-dot ml-2" role="status" aria-label="Operational">
-              <span className="sr-only">Operational</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link
-              href="/docs"
-              className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-400 transition hover:text-[#9fdd58]"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/login"
-              className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-400 transition hover:text-[#9fdd58]"
-            >
-              Auth
-            </Link>
-            <Link
-              href="/playground"
-              className="ml-2 border border-[#9fdd58]/30 bg-[#9fdd58]/8 px-4 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#9fdd58] transition hover:bg-[#9fdd58]/15"
-            >
-              Playground
-            </Link>
-          </div>
-        </nav>
+        <TopNav className="animate-fade-in-up" />
 
         {/* ── Hero ── */}
         <section className="animate-fade-in-up delay-100 relative overflow-hidden">
