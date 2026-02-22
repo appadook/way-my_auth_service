@@ -1043,8 +1043,9 @@ export default function DocsPage() {
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <DataCard title="Cookie attributes">
                   <ul className="mt-1 space-y-1 text-xs text-slate-500">
-                    <li>HttpOnly, SameSite=Lax, Path=/</li>
-                    <li>Secure in production</li>
+                    <li>HttpOnly, Path=/</li>
+                    <li>SameSite defaults: production=none, dev/test=lax</li>
+                    <li>Secure in production and when SameSite=None</li>
                     <li>Max-Age = 30 days</li>
                     <li>Name set by REFRESH_COOKIE_NAME</li>
                   </ul>
@@ -1065,10 +1066,10 @@ export default function DocsPage() {
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <DataCard title="Allowed headers">
-                  <p className="font-mono text-xs text-slate-300">content-type, authorization</p>
+                  <p className="font-mono text-xs text-slate-300">content-type, authorization, x-way-signup-secret</p>
                 </DataCard>
                 <DataCard title="Allowed methods">
-                  <p className="font-mono text-xs text-slate-300">GET, POST, OPTIONS</p>
+                  <p className="font-mono text-xs text-slate-300">GET, POST, PATCH, DELETE, OPTIONS</p>
                 </DataCard>
               </div>
             </SectionPanel>

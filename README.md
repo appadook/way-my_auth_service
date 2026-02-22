@@ -43,7 +43,7 @@ JWT_AUDIENCE=""
 ACCESS_TOKEN_TTL_SECONDS="900"
 REFRESH_COOKIE_NAME="way_refresh"
 REFRESH_COOKIE_DOMAIN=""
-REFRESH_COOKIE_SAME_SITE="lax"
+REFRESH_COOKIE_SAME_SITE="none"
 ADMIN_EMAILS="admin@example.com"
 SIGNUP_SECRET=""
 ```
@@ -53,8 +53,8 @@ Notes:
 - `DIRECT_URL`: non-pooled Neon URL (migrations)
 - `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: PEM values (escaped `\n` supported). Raw base64 key bodies are also accepted and normalized to PEM at runtime.
 - `ACCESS_TOKEN_TTL_SECONDS`: access token lifetime in seconds (default `900`).
-- `REFRESH_COOKIE_DOMAIN`: optional shared cookie domain (e.g. `.example.com`) for multi-subdomain setups.
-- `REFRESH_COOKIE_SAME_SITE`: `lax` (default), `strict`, or `none`. Use `none` for cross-origin credentialed browser flows (requires HTTPS).
+- `REFRESH_COOKIE_DOMAIN`: optional cookie domain (e.g. `auth.example.com`, `example.com`, or `way-my-auth-service.vercel.app`). Avoid public-suffix values such as `vercel.app`.
+- `REFRESH_COOKIE_SAME_SITE`: `lax`, `strict`, or `none`. If unset, production defaults to `none` and development/test defaults to `lax`.
 - `ADMIN_EMAILS`: comma-separated list of admin emails allowed to access the CORS admin UI.
 - `SIGNUP_SECRET`: shared secret required for `POST /api/v1/signup`. Clients must send `x-way-signup-secret`.
 

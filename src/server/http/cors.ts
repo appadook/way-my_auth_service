@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { listCorsOrigins } from "@/server/http/cors-origins";
 
-const CORS_ALLOWED_HEADERS = "content-type, authorization";
-const CORS_ALLOWED_METHODS = "GET, POST, OPTIONS";
+const DEFAULT_ALLOWED_HEADERS = ["content-type", "authorization", "x-way-signup-secret"];
+const CORS_ALLOWED_METHODS = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"];
 const CORS_MAX_AGE_SECONDS = "600";
 const CORS_CACHE_TTL_MS = 30_000;
 
@@ -78,13 +78,29 @@ function appendVary(response: NextResponse, value: string): void {
   }
 }
 
-function applyCorsHeaders(response: NextResponse, origin: string): NextResponse {
+function resolveAllowedHeaders(request: NextRequest): string {
+  const requested = request.headers.get("access-control-request-headers");
+  if (!requested) {
+    return DEFAULT_ALLOWED_HEADERS.join(", ");
+  }
+
+  const parsedRequested = requested
+    .split(",")
+    .map((header) => header.trim().toLowerCase())
+    .filter(Boolean);
+
+  const headerSet = new Set([...DEFAULT_ALLOWED_HEADERS, ...parsedRequested]);
+  return Array.from(headerSet).join(", ");
+}
+
+function applyCorsHeaders(request: NextRequest, response: NextResponse, origin: string): NextResponse {
   response.headers.set("Access-Control-Allow-Origin", origin);
   response.headers.set("Access-Control-Allow-Credentials", "true");
-  response.headers.set("Access-Control-Allow-Headers", CORS_ALLOWED_HEADERS);
-  response.headers.set("Access-Control-Allow-Methods", CORS_ALLOWED_METHODS);
+  response.headers.set("Access-Control-Allow-Headers", resolveAllowedHeaders(request));
+  response.headers.set("Access-Control-Allow-Methods", CORS_ALLOWED_METHODS.join(", "));
   response.headers.set("Access-Control-Max-Age", CORS_MAX_AGE_SECONDS);
   appendVary(response, "Origin");
+  appendVary(response, "Access-Control-Request-Headers");
 
   return response;
 }
@@ -95,7 +111,7 @@ export async function withCors(request: NextRequest, response: NextResponse): Pr
     return response;
   }
 
-  return applyCorsHeaders(response, allowedOrigin);
+  return applyCorsHeaders(request, response, allowedOrigin);
 }
 
 export async function handleCorsPreflight(request: NextRequest): Promise<NextResponse> {
@@ -112,7 +128,7 @@ export async function handleCorsPreflight(request: NextRequest): Promise<NextRes
     );
   }
 
-  return applyCorsHeaders(new NextResponse(null, { status: 204 }), allowedOrigin);
+  return applyCorsHeaders(request, new NextResponse(null, { status: 204 }), allowedOrigin);
 }
 
 export function invalidateCorsCache(): void {
