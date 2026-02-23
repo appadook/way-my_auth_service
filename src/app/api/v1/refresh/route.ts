@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { refreshSession } from "@/server/auth/auth-service";
+import { getRefreshErrorMessage, type RefreshErrorCode } from "@/server/auth/refresh-errors";
 import { handleCorsPreflight, withCors } from "@/server/http/cors";
 import { getCookieDebugContext, logAuthError, logAuthInfo, logAuthWarn } from "@/server/observability/auth-events";
 import { apiError } from "@/server/http/response";
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
   if (!rateLimit.success) {
     logAuthWarn("refresh_rate_limited", {
       ...cookieDebug,
+      outcome: "rate_limited",
     });
     return respond(apiError(429, "rate_limited", "Too many refresh requests. Please try again shortly."));
   }
@@ -33,18 +35,24 @@ export async function POST(request: NextRequest) {
   if (!refreshToken) {
     logAuthWarn("refresh_missing_cookie", {
       ...cookieDebug,
+      outcome: "missing_refresh_token",
       refreshCookieName: env.REFRESH_COOKIE_NAME,
     });
-    return respond(apiError(401, "missing_refresh_token", "Refresh token is required."));
+    return respond(
+      apiError(401, "missing_refresh_token", getRefreshErrorMessage("missing_refresh_token")),
+    );
   }
 
   try {
     const result = await refreshSession(refreshToken);
     if (!result.ok) {
-      const response = apiError(401, "invalid_refresh_token", "Refresh token is invalid or expired.");
+      const errorCode: RefreshErrorCode =
+        result.code === "expired_refresh_token" ? "expired_refresh_token" : "invalid_refresh_token";
+      const response = apiError(401, errorCode, getRefreshErrorMessage(errorCode));
       const cookieTelemetry = clearRefreshTokenCookie(response);
       logAuthWarn("refresh_invalid_or_expired", {
         ...cookieDebug,
+        outcome: errorCode,
         code: result.code,
         clearCookie: cookieTelemetry,
       });
@@ -59,6 +67,7 @@ export async function POST(request: NextRequest) {
     const cookieTelemetry = setRefreshTokenCookie(response, result.data.tokens.refreshToken);
     logAuthInfo("refresh_success", {
       ...cookieDebug,
+      outcome: "ok",
       cookie: cookieTelemetry,
     });
 
@@ -68,6 +77,7 @@ export async function POST(request: NextRequest) {
     const cookieTelemetry = clearRefreshTokenCookie(response);
     logAuthError("refresh_internal_error", {
       ...cookieDebug,
+      outcome: "internal_error",
       message: error instanceof Error ? error.message : "Unknown error",
       clearCookie: cookieTelemetry,
     });

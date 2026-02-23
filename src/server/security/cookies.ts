@@ -1,9 +1,10 @@
 import type { NextRequest, NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { env, type RefreshCookieMode } from "@/lib/env";
 
-export const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
+export const REFRESH_TOKEN_TTL_SECONDS = env.REFRESH_TOKEN_TTL_SECONDS;
 const DISALLOWED_COOKIE_DOMAINS = new Set(["vercel.app"]);
 let hasLoggedInvalidDomainWarning = false;
+let hasLoggedProxyModeDomainWarning = false;
 
 export type RefreshCookieTelemetry = {
   name: string;
@@ -49,9 +50,36 @@ export function normalizeRefreshCookieDomain(input: string): string | null {
   return withoutLeadingDot;
 }
 
+export function resolveRefreshCookieDomainForMode(
+  mode: RefreshCookieMode,
+  configuredDomain: string,
+): string | null {
+  if (mode === "proxy") {
+    return null;
+  }
+
+  return normalizeRefreshCookieDomain(configuredDomain);
+}
+
 function resolveRefreshCookieDomain(): string | null {
   const configured = env.REFRESH_COOKIE_DOMAIN;
-  const normalized = normalizeRefreshCookieDomain(configured);
+  if (env.REFRESH_COOKIE_MODE === "proxy") {
+    if (configured.trim() && !hasLoggedProxyModeDomainWarning) {
+      hasLoggedProxyModeDomainWarning = true;
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          scope: "auth.cookie",
+          event: "refresh_cookie_domain_ignored_in_proxy_mode",
+          configuredDomain: configured,
+        }),
+      );
+    }
+
+    return null;
+  }
+
+  const normalized = resolveRefreshCookieDomainForMode(env.REFRESH_COOKIE_MODE, configured);
 
   if (!normalized && configured.trim() && !hasLoggedInvalidDomainWarning) {
     hasLoggedInvalidDomainWarning = true;

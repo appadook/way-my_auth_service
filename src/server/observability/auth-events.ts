@@ -45,12 +45,20 @@ export function getCookieDebugContext(request: NextRequest, refreshCookieName: s
   const cookieHeader = request.headers.get("cookie");
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
+  const host = request.headers.get("host");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const protocol = forwardedProto ?? request.nextUrl.protocol.replace(/:$/, "");
 
   return {
     method: request.method,
     pathname: request.nextUrl.pathname,
     origin,
     referer,
+    host,
+    forwardedHost,
+    forwardedProto,
+    protocol,
     hasCookieHeader: Boolean(cookieHeader),
     hasRefreshCookie: Boolean(request.cookies.get(refreshCookieName)?.value),
   };

@@ -37,7 +37,7 @@ type AuthFailureCode =
   | "email_taken"
   | "invalid_credentials"
   | "invalid_refresh_token"
-  | "session_expired";
+  | "expired_refresh_token";
 
 type AuthResult = { ok: true; data: AuthSuccess } | { ok: false; code: AuthFailureCode };
 
@@ -126,7 +126,7 @@ export async function refreshSession(rawRefreshToken: string): Promise<AuthResul
   }
 
   if (session.expiresAt <= now) {
-    return { ok: false, code: "session_expired" };
+    return { ok: false, code: "expired_refresh_token" };
   }
 
   const isValidSecret = await verifyRefreshTokenSecret(session.refreshTokenHash, parsed.secret);

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { normalizeRefreshCookieDomain } from "../src/server/security/cookies";
+import { resolveRefreshCookieSameSite } from "../src/lib/env";
+import {
+  normalizeRefreshCookieDomain,
+  resolveRefreshCookieDomainForMode,
+} from "../src/server/security/cookies";
 
 describe("normalizeRefreshCookieDomain", () => {
   it("normalizes valid domains", () => {
@@ -20,5 +24,30 @@ describe("normalizeRefreshCookieDomain", () => {
     expect(normalizeRefreshCookieDomain("way-my-auth-service.vercel.app")).toBe(
       "way-my-auth-service.vercel.app",
     );
+  });
+});
+
+describe("resolveRefreshCookieSameSite", () => {
+  it("defaults to lax for proxy mode", () => {
+    expect(resolveRefreshCookieSameSite("proxy", undefined)).toBe("lax");
+  });
+
+  it("defaults to none for cross-site mode", () => {
+    expect(resolveRefreshCookieSameSite("cross-site", undefined)).toBe("none");
+  });
+
+  it("respects explicit same-site override", () => {
+    expect(resolveRefreshCookieSameSite("proxy", "strict")).toBe("strict");
+    expect(resolveRefreshCookieSameSite("cross-site", "lax")).toBe("lax");
+  });
+});
+
+describe("resolveRefreshCookieDomainForMode", () => {
+  it("forces host-only cookies in proxy mode", () => {
+    expect(resolveRefreshCookieDomainForMode("proxy", "example.com")).toBeNull();
+  });
+
+  it("allows normalized domain in cross-site mode", () => {
+    expect(resolveRefreshCookieDomainForMode("cross-site", ".Auth.Example.com")).toBe("auth.example.com");
   });
 });

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const refreshCookieModeSchema = z.enum(["proxy", "cross-site"]);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().min(1),
@@ -11,8 +13,10 @@ const envSchema = z.object({
   JWT_ISSUER: z.string().min(1),
   JWT_AUDIENCE: z.string().min(1),
   REFRESH_COOKIE_NAME: z.string().min(1),
+  REFRESH_COOKIE_MODE: refreshCookieModeSchema.default("proxy"),
   REFRESH_COOKIE_DOMAIN: z.string().default(""),
   REFRESH_COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).optional(),
+  REFRESH_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(60 * 60 * 24 * 365).default(60 * 60 * 24 * 30),
   ADMIN_EMAILS: z.string().default(""),
   SIGNUP_SECRET: z.string().default(""),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(60 * 60 * 24).default(15 * 60),
@@ -49,15 +53,17 @@ function normalizePublicKey(value: string): string {
   return toPem(normalized, "PUBLIC KEY");
 }
 
-function resolveRefreshCookieSameSite(
-  nodeEnv: "development" | "test" | "production",
+export type RefreshCookieMode = z.infer<typeof refreshCookieModeSchema>;
+
+export function resolveRefreshCookieSameSite(
+  mode: RefreshCookieMode,
   configured: "lax" | "strict" | "none" | undefined,
 ): "lax" | "strict" | "none" {
   if (configured) {
     return configured;
   }
 
-  if (nodeEnv === "production") {
+  if (mode === "cross-site") {
     return "none";
   }
 
@@ -69,7 +75,7 @@ export const env = {
   JWT_PRIVATE_KEY: normalizePrivateKey(parsedEnv.data.JWT_PRIVATE_KEY),
   JWT_PUBLIC_KEY: normalizePublicKey(parsedEnv.data.JWT_PUBLIC_KEY),
   REFRESH_COOKIE_SAME_SITE: resolveRefreshCookieSameSite(
-    parsedEnv.data.NODE_ENV,
+    parsedEnv.data.REFRESH_COOKIE_MODE,
     parsedEnv.data.REFRESH_COOKIE_SAME_SITE,
   ),
 };

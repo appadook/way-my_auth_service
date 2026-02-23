@@ -56,9 +56,16 @@ Replace custom auth files/usages with generated `auth` surface:
 ## 5) Session persistence setup (important)
 
 In this auth service (server env):
-- `REFRESH_COOKIE_SAME_SITE="none"` for cross-origin browser flows
-- `REFRESH_COOKIE_DOMAIN=".example.com"` for shared-subdomain cookies (optional)
+- `REFRESH_COOKIE_MODE="proxy"` for Next.js same-origin proxy mode (recommended default)
+- `REFRESH_COOKIE_MODE="cross-site"` for direct cross-origin browser flows
+- `REFRESH_COOKIE_DOMAIN=".example.com"` for shared-subdomain cookies (optional, cross-site mode)
+- `REFRESH_COOKIE_SAME_SITE` only when you need to explicitly override mode defaults
 - `ACCESS_TOKEN_TTL_SECONDS="900"` (or higher based on your security/UX needs)
+- `REFRESH_TOKEN_TTL_SECONDS="2592000"` (30 days by default)
+
+Refresh contract reminder:
+- `POST /api/v1/refresh` uses cookie token only (request body token is ignored)
+- Stable failure codes: `missing_refresh_token`, `expired_refresh_token`, `invalid_refresh_token`
 
 In consumer apps:
 - call `auth.client.bootstrapSession()` on startup
@@ -71,4 +78,3 @@ bun run lint
 bun run typecheck
 bun run build
 ```
-

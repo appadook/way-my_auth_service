@@ -27,6 +27,7 @@ export type WayAuthErrorCode =
   | "invalid_input"
   | "invalid_json"
   | "invalid_origin"
+  | "expired_refresh_token"
   | "invalid_refresh_token"
   | "invalid_session_id"
   | "invalid_signup_secret"

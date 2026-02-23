@@ -41,9 +41,11 @@ JWT_PUBLIC_KEY=""
 JWT_ISSUER=""
 JWT_AUDIENCE=""
 ACCESS_TOKEN_TTL_SECONDS="900"
+REFRESH_TOKEN_TTL_SECONDS="2592000"
 REFRESH_COOKIE_NAME="way_refresh"
+REFRESH_COOKIE_MODE="proxy"
 REFRESH_COOKIE_DOMAIN=""
-REFRESH_COOKIE_SAME_SITE="none"
+# REFRESH_COOKIE_SAME_SITE="none"
 ADMIN_EMAILS="admin@example.com"
 SIGNUP_SECRET=""
 ```
@@ -53,8 +55,10 @@ Notes:
 - `DIRECT_URL`: non-pooled Neon URL (migrations)
 - `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: PEM values (escaped `\n` supported). Raw base64 key bodies are also accepted and normalized to PEM at runtime.
 - `ACCESS_TOKEN_TTL_SECONDS`: access token lifetime in seconds (default `900`).
-- `REFRESH_COOKIE_DOMAIN`: optional cookie domain (e.g. `auth.example.com`, `example.com`, or `way-my-auth-service.vercel.app`). Avoid public-suffix values such as `vercel.app`.
-- `REFRESH_COOKIE_SAME_SITE`: `lax`, `strict`, or `none`. If unset, production defaults to `none` and development/test defaults to `lax`.
+- `REFRESH_TOKEN_TTL_SECONDS`: refresh session lifetime in seconds (default `2592000`, 30 days).
+- `REFRESH_COOKIE_MODE`: `proxy` (default) or `cross-site`.
+- `REFRESH_COOKIE_DOMAIN`: optional cookie domain used for `cross-site` mode. In `proxy` mode it is ignored and cookies remain host-only.
+- `REFRESH_COOKIE_SAME_SITE`: optional override (`lax`, `strict`, `none`). If unset, defaults follow `REFRESH_COOKIE_MODE`.
 - `ADMIN_EMAILS`: comma-separated list of admin emails allowed to access the CORS admin UI.
 - `SIGNUP_SECRET`: shared secret required for `POST /api/v1/signup`. Clients must send `x-way-signup-secret`.
 
@@ -92,6 +96,33 @@ bun run dev
 - Refresh tokens are stored in **HttpOnly cookies** scoped to `/`.
 - Refresh tokens are **rotated** on each `/api/v1/refresh` call.
 - Access tokens are short-lived JWTs and should be kept in memory.
+- `POST /api/v1/refresh` reads the refresh token from cookie only (request body token is not required or used).
+- `POST /api/v1/refresh` returns stable 401 codes for cookie-backed session failures:
+  - `missing_refresh_token`
+  - `expired_refresh_token`
+  - `invalid_refresh_token`
+
+### Cookie Mode Matrix
+
+| Mode | Primary use case | SameSite default | Domain | Secure |
+| --- | --- | --- | --- | --- |
+| `proxy` (default) | Next.js same-origin proxy (`/api/v1/*`) | `Lax` | Host-only (`Domain` unset) | `true` in production HTTPS |
+| `cross-site` | Direct browser calls across origins | `None` | Optional `REFRESH_COOKIE_DOMAIN` | Always `true` (required by browsers for `SameSite=None`) |
+
+`REFRESH_COOKIE_SAME_SITE` can override either mode when explicitly set.
+
+## Next.js Proxy Mode (Recommended)
+
+Use app-origin proxy routing for browser traffic:
+
+- Browser -> app origin (`/api/v1/*`)
+- App rewrites/proxies to auth service origin
+
+Why this is more reliable:
+
+- avoids third-party/cross-site cookie delivery edge cases
+- keeps refresh/session cookies first-party to the browser app origin
+- reduces intermittent `missing_refresh_token` behavior during long-lived sessions
 
 ## Protected Pages
 
@@ -174,7 +205,7 @@ SDK highlights:
 If your frontend runs on a different origin, add it in the CORS admin UI at `/admin/cors`. The origin list is stored in the database and can be updated without redeploying.
 
 For cross-origin browser sessions, also configure refresh-cookie behavior:
-- set `REFRESH_COOKIE_SAME_SITE="none"`
+- set `REFRESH_COOKIE_MODE="cross-site"` (or explicitly `REFRESH_COOKIE_SAME_SITE="none"`)
 - ensure HTTPS in production
 - optionally set `REFRESH_COOKIE_DOMAIN` for shared-subdomain cookie scope
 

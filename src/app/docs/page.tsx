@@ -157,11 +157,11 @@ const endpointGroups: EndpointGroup[] = [
         name: "Refresh access token",
         method: "POST",
         path: "/api/v1/refresh",
-        summary: "Rotate the refresh session and issue a new access token.",
+        summary: "Rotate the refresh session and issue a new access token. No request body is required.",
         auth: "Refresh token cookie.",
         rateLimit: "20 requests / 10 minutes / IP",
         request: {
-          headers: ["cookie: <refresh cookie>", "content-type: application/json (optional)"],
+          headers: ["cookie: <refresh cookie>"],
         },
         response: JSON.stringify(
           {
@@ -172,7 +172,7 @@ const endpointGroups: EndpointGroup[] = [
           null,
           2,
         ),
-        errors: ["missing_refresh_token", "invalid_refresh_token", "rate_limited"],
+        errors: ["missing_refresh_token", "expired_refresh_token", "invalid_refresh_token", "rate_limited"],
         example: {
           request: [
             "curl -X POST https://way-my-auth-service.vercel.app/api/v1/refresh \\",
@@ -1044,9 +1044,9 @@ export default function DocsPage() {
                 <DataCard title="Cookie attributes">
                   <ul className="mt-1 space-y-1 text-xs text-slate-500">
                     <li>HttpOnly, Path=/</li>
-                    <li>SameSite defaults: production=none, dev/test=lax</li>
-                    <li>Secure in production and when SameSite=None</li>
-                    <li>Max-Age = 30 days</li>
+                    <li>Mode defaults: proxy =&gt; SameSite=Lax, cross-site =&gt; SameSite=None</li>
+                    <li>Secure in production and always when SameSite=None</li>
+                    <li>Max-Age defaults to 30 days (REFRESH_TOKEN_TTL_SECONDS)</li>
                     <li>Name set by REFRESH_COOKIE_NAME</li>
                   </ul>
                 </DataCard>

@@ -26,4 +26,14 @@ describe("getWayAuthErrorMessage", () => {
   it("falls back when error is unknown", () => {
     expect(getWayAuthErrorMessage("oops", "fallback")).toBe("fallback");
   });
+
+  it("maps expired refresh token code", () => {
+    const error = new WayAuthApiError("Refresh token has expired.", {
+      status: 401,
+      code: "expired_refresh_token",
+      details: null,
+    });
+
+    expect(getWayAuthErrorMessage(error)).toBe(WAY_AUTH_ERROR_MESSAGES.expired_refresh_token);
+  });
 });
