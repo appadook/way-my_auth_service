@@ -20,6 +20,13 @@ export function getRefreshTokenFromRequest(request: NextRequest): string | null 
   return request.cookies.get(env.REFRESH_COOKIE_NAME)?.value ?? null;
 }
 
+export function resolveRefreshCookieSecure(
+  nodeEnv: "development" | "test" | "production",
+  sameSite: "lax" | "strict" | "none",
+): boolean {
+  return nodeEnv === "production" || sameSite === "none";
+}
+
 export function normalizeRefreshCookieDomain(input: string): string | null {
   const trimmed = input.trim().toLowerCase();
   if (!trimmed) {
@@ -97,7 +104,7 @@ function resolveRefreshCookieDomain(): string | null {
 }
 
 function buildRefreshCookieTelemetry(maxAge: number): RefreshCookieTelemetry {
-  const secure = env.NODE_ENV === "production" || env.REFRESH_COOKIE_SAME_SITE === "none";
+  const secure = resolveRefreshCookieSecure(env.NODE_ENV, env.REFRESH_COOKIE_SAME_SITE);
   const domain = resolveRefreshCookieDomain();
 
   return {

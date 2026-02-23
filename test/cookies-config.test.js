@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { resolveRefreshCookieSameSite } from "../src/lib/env";
 import {
   normalizeRefreshCookieDomain,
+  resolveRefreshCookieSecure,
   resolveRefreshCookieDomainForMode,
 } from "../src/server/security/cookies";
 
@@ -49,5 +50,20 @@ describe("resolveRefreshCookieDomainForMode", () => {
 
   it("allows normalized domain in cross-site mode", () => {
     expect(resolveRefreshCookieDomainForMode("cross-site", ".Auth.Example.com")).toBe("auth.example.com");
+  });
+});
+
+describe("resolveRefreshCookieSecure", () => {
+  it("enables secure cookies in production for proxy mode defaults", () => {
+    expect(resolveRefreshCookieSecure("production", "lax")).toBe(true);
+  });
+
+  it("enables secure cookies for sameSite none in cross-site mode", () => {
+    expect(resolveRefreshCookieSecure("development", "none")).toBe(true);
+  });
+
+  it("allows non-secure cookies only for non-production lax/strict modes", () => {
+    expect(resolveRefreshCookieSecure("development", "lax")).toBe(false);
+    expect(resolveRefreshCookieSecure("test", "strict")).toBe(false);
   });
 });

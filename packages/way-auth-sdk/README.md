@@ -2,47 +2,40 @@
 
 Next.js-first authentication SDK for WAY Auth Service.
 
-## Fastest Next.js setup
+## Fastest setup
 
 ```bash
 bun add ../way-my_auth_service/packages/way-auth-sdk
-bunx way-auth-setup --framework next --minimal
+bunx way-auth-setup --framework next --minimal --transport-mode proxy
 ```
 
-Set one env var in `.env.local`:
+## Minimal env
+
+Set both keys to the same value in `.env.local`:
 
 ```bash
 WAY_AUTH_BASE_URL="https://way-my-auth-service.vercel.app"
+NEXT_PUBLIC_WAY_AUTH_BASE_URL="https://way-my-auth-service.vercel.app"
 ```
 
-## What gets generated
+## What setup generates
 
 1. `src/lib/auth.ts`
-- Creates a single `createWayAuthNext()` instance.
-- Exposes `auth.client`, `auth.server`, `auth.middleware`, `auth.matcher`.
+- singleton `createWayAuthNext(...)`
+- exports `auth.client`, `auth.server`, `auth.middleware`, `auth.matcher`
 
 2. `middleware.ts`
-- Re-exports SDK middleware and matcher.
+- re-exports SDK middleware/matcher
 
 3. `.env.local`
-- Merges in `WAY_AUTH_BASE_URL` (idempotent).
+- idempotent env merge
 
 4. `way-auth-setup-guide.md`
-- Project-local usage and migration notes.
+- project-local setup + migration notes
 
-## One-env minimal config
-
-`WAY_AUTH_BASE_URL` is enough for baseline integration.
-
-The SDK resolves additional config (issuer, audience, JWKS URL, endpoint URLs) using:
-
-- `GET /.well-known/way-auth-configuration`
-
-Discovery modes:
-
-- `auto` (default): use discovery when available, fallback otherwise.
-- `always`: require discovery, throw if unavailable.
-- `never`: skip discovery and use provided/default values.
+5. proxy mode rewrite help
+- attempts to patch `next.config.*` rewrites automatically
+- writes `way-auth-next-rewrites.snippet.txt` fallback when auto-merge is not safe
 
 ## Next adapter API
 
@@ -61,63 +54,63 @@ Factory result:
 - `auth.client.refresh`
 - `auth.client.logout`
 - `auth.client.bootstrapSession`
+- `auth.client.isPublicAuthRoute`
 - `auth.client.startSessionKeepAlive`
 - `auth.server.getSession`
 - `auth.server.requireSession`
 - `auth.errors.toUiError`
 
-## Advanced overrides
+## Transport modes
+
+- `transportMode: "direct"` (default, backward compatible)
+- `transportMode: "proxy"` (recommended for Next.js app-origin rewrites)
+
+In `proxy` mode, client transport endpoints default to relative paths (`/api/v1/*`) even when discovery metadata contains absolute upstream endpoints.
+
+## Endpoint origin guard
 
 ```ts
-const auth = createWayAuthNext({
-  discoveryMode: "always",
-  accessTokenCookieName: "way_access_token",
-  middleware: {
-    adminPrefix: "/admin",
-    publicPaths: ["/admin/login", "/admin/signup"],
-    loginPath: "/admin/login",
-    postLoginPath: "/admin",
-    nextParamName: "next",
-  },
-  hydrationStrategy: "best-effort",
+createWayAuthNext({
+  transportMode: "proxy",
+  endpointOriginGuard: "warn", // default: "warn"
 });
 ```
 
-Keep session active in long-lived browser tabs:
+Options:
+
+- `"off"`: no mismatch checks
+- `"warn"`: log warning if resolved endpoint origins diverge from base URL origin
+- `"error"`: throw on mismatch
+
+## Route-aware bootstrap and keep-alive
 
 ```ts
-const stopKeepAlive = auth.client.startSessionKeepAlive({ intervalMs: 5 * 60 * 1000 });
-// call stopKeepAlive() on teardown if needed
+const pathname = window.location.pathname;
+if (!auth.client.isPublicAuthRoute(pathname)) {
+  await auth.client.bootstrapSession();
+}
+
+const stopKeepAlive = auth.client.startSessionKeepAlive();
 ```
 
-## Core low-level API
-
-If you do not want the Next adapter:
-
-- `@way/auth-sdk/core`
-- `@way/auth-sdk/client`
-- `@way/auth-sdk/server`
-- `@way/auth-sdk/state`
-- `@way/auth-sdk/react`
-
-`@way/auth-sdk/core` exports config resolution helpers and base client/server primitives.
+`startSessionKeepAlive()` is adaptive by default (derived from token TTL, clamped to safe bounds). Use `{ intervalMs }` to override.
 
 ## CLI flags
 
 ```bash
-bunx way-auth-setup --framework next --minimal
+bunx way-auth-setup --framework next --minimal --transport-mode proxy
 ```
 
 Common flags:
 
-- `--merge-env` (default: true)
+- `--transport-mode direct|proxy`
+- `--no-rewrites`
+- `--merge-env` / `--no-merge-env`
 - `--admin-prefix`
 - `--public-paths`
 - `--overwrite`
 - `--yes`
 
 ## Detailed guide
-
-See:
 
 - `/Users/kurtik/code/public/way-my_auth_service/packages/way-auth-sdk/GUIDE.md`

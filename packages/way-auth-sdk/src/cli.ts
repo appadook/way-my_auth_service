@@ -2,12 +2,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
+  buildNextRewritesSnippet,
   buildConsumerConfig,
   buildEnvFile,
   buildNextAuthFile,
   buildNextEnvUpdates,
   buildNextMiddlewareFile,
   buildNextSetupGuide,
+  patchNextConfigWithProxyRewrites,
   buildSetupGuide,
   mergeEnvFile,
   normalizePublicPaths,
@@ -17,6 +19,8 @@ type CliOptions = {
   framework?: "next" | "generic";
   minimal?: boolean;
   mergeEnv?: boolean;
+  transportMode?: "direct" | "proxy";
+  noRewrites?: boolean;
   baseUrl?: string;
   issuer?: string;
   audience?: string;
@@ -35,6 +39,13 @@ type CliOptions = {
 const DEFAULT_BASE_URL = "https://way-my-auth-service.vercel.app";
 const DEFAULT_AUTH_FILE_PATH = "src/lib/auth.ts";
 const DEFAULT_MIDDLEWARE_PATH = "middleware.ts";
+const DEFAULT_REWRITE_SNIPPET_PATH = "way-auth-next-rewrites.snippet.txt";
+const NEXT_CONFIG_CANDIDATE_PATHS = [
+  "next.config.ts",
+  "next.config.js",
+  "next.config.mjs",
+  "next.config.cjs",
+];
 
 function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
@@ -57,6 +68,10 @@ function parseArgs(argv: string[]): CliOptions {
     }
     if (arg === "--minimal") {
       options.minimal = true;
+      continue;
+    }
+    if (arg === "--no-rewrites") {
+      options.noRewrites = true;
       continue;
     }
     if (arg === "--merge-env") {
@@ -82,6 +97,12 @@ function parseArgs(argv: string[]): CliOptions {
         break;
       case "--base-url":
         options.baseUrl = nextValue;
+        index += 1;
+        break;
+      case "--transport-mode":
+        if (nextValue === "direct" || nextValue === "proxy") {
+          options.transportMode = nextValue;
+        }
         index += 1;
         break;
       case "--issuer":
@@ -141,6 +162,8 @@ function printUsage() {
     "  --minimal                  (default: true for next)",
     "  --merge-env                merge env updates (default: true)",
     "  --no-merge-env             write env file directly",
+    "  --transport-mode           direct|proxy (default: direct)",
+    "  --no-rewrites              skip next.config rewrite patching in proxy mode",
     `  --base-url                 (default: ${DEFAULT_BASE_URL})`,
     "  --issuer                   issuer override (generic mode)",
     "  --audience                 audience override (generic mode)",
@@ -181,6 +204,16 @@ async function ensureParentDirectory(filePath: string) {
   await fs.mkdir(directory, { recursive: true });
 }
 
+async function findFirstExistingPath(candidates: string[]): Promise<string | null> {
+  for (const candidate of candidates) {
+    if (await fileExists(path.resolve(process.cwd(), candidate))) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 async function writeManagedFile(filePath: string, content: string, overwrite: boolean): Promise<"created" | "updated" | "unchanged"> {
   const existing = await readFileIfExists(filePath);
   if (existing === null) {
@@ -207,14 +240,17 @@ async function runNextSetup(options: CliOptions) {
   const guidePath = options.guidePath ?? "way-auth-setup-guide.md";
   const authFilePath = options.authFilePath ?? DEFAULT_AUTH_FILE_PATH;
   const middlewarePath = options.middlewarePath ?? DEFAULT_MIDDLEWARE_PATH;
+  const transportMode = options.transportMode ?? "direct";
   const overwrite = Boolean(options.overwrite || options.yes);
   const mergeEnv = options.mergeEnv ?? true;
+  const shouldPatchRewrites = transportMode === "proxy" && !options.noRewrites;
 
   const publicPaths = normalizePublicPaths(options.publicPaths);
 
   const authFile = buildNextAuthFile({
     adminPrefix: options.adminPrefix,
     publicPaths,
+    transportMode,
   });
   const middlewareFile = buildNextMiddlewareFile();
   const guideFile = buildNextSetupGuide({
@@ -222,16 +258,43 @@ async function runNextSetup(options: CliOptions) {
     envPath,
     authFilePath,
     middlewarePath,
+    transportMode,
   });
 
   const authAbsolute = path.resolve(process.cwd(), authFilePath);
   const middlewareAbsolute = path.resolve(process.cwd(), middlewarePath);
   const guideAbsolute = path.resolve(process.cwd(), guidePath);
   const envAbsolute = path.resolve(process.cwd(), envPath);
+  const rewriteSnippetAbsolute = path.resolve(process.cwd(), DEFAULT_REWRITE_SNIPPET_PATH);
+  let rewritesStatus = "skipped";
 
   const authStatus = await writeManagedFile(authAbsolute, authFile, overwrite);
   const middlewareStatus = await writeManagedFile(middlewareAbsolute, middlewareFile, overwrite);
   const guideStatus = await writeManagedFile(guideAbsolute, guideFile, overwrite);
+
+  if (shouldPatchRewrites) {
+    const existingConfigPath = await findFirstExistingPath(NEXT_CONFIG_CANDIDATE_PATHS);
+    if (existingConfigPath) {
+      const existingConfigAbsolute = path.resolve(process.cwd(), existingConfigPath);
+      const existingConfig = (await readFileIfExists(existingConfigAbsolute)) ?? "";
+      const patchResult = patchNextConfigWithProxyRewrites(existingConfig, baseUrl);
+      if (patchResult.status === "updated") {
+        await fs.writeFile(existingConfigAbsolute, patchResult.content, "utf8");
+        rewritesStatus = `patched ${existingConfigPath}`;
+      } else if (patchResult.status === "unchanged") {
+        rewritesStatus = `already configured in ${existingConfigPath}`;
+      } else if (patchResult.status === "unsupported") {
+        await fs.writeFile(rewriteSnippetAbsolute, `${patchResult.snippet}\n`, "utf8");
+        rewritesStatus = `manual snippet required (${DEFAULT_REWRITE_SNIPPET_PATH}): ${patchResult.reason}`;
+      } else {
+        rewritesStatus = `manual snippet required (${DEFAULT_REWRITE_SNIPPET_PATH}): unknown rewrite patch status`;
+      }
+    } else {
+      const snippet = buildNextRewritesSnippet(baseUrl);
+      await fs.writeFile(rewriteSnippetAbsolute, `${snippet}\n`, "utf8");
+      rewritesStatus = `manual snippet required (${DEFAULT_REWRITE_SNIPPET_PATH}): no next.config.* file found`;
+    }
+  }
 
   const envUpdates = buildNextEnvUpdates(baseUrl);
   const existingEnv = (await readFileIfExists(envAbsolute)) ?? "";
@@ -254,6 +317,8 @@ async function runNextSetup(options: CliOptions) {
       `- ${middlewarePath}: ${middlewareStatus}`,
       `- ${guidePath}: ${guideStatus}`,
       `- ${envPath}: merged`,
+      `- transport-mode: ${transportMode}`,
+      `- rewrites: ${rewritesStatus}`,
     ].join("\n"),
   );
 }

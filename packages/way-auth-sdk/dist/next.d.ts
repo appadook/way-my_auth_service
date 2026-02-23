@@ -1,7 +1,9 @@
 import { type ResolveWayAuthConfigOptions } from "./config";
 import { type WayAuthVerifiedToken } from "./server";
-import type { WayAuthCredentialInput, WayAuthUser } from "./types";
+import type { WayAuthCredentialInput, WayAuthEndpoints, WayAuthUser } from "./types";
 type HydrationStrategy = "best-effort" | "required";
+type WayAuthTransportMode = "direct" | "proxy";
+type WayAuthEndpointOriginGuard = "off" | "warn" | "error";
 export type WayAuthUiError = {
     message: string;
     code: string | null;
@@ -35,6 +37,9 @@ export type WayAuthNextOptions = ResolveWayAuthConfigOptions & {
     accessTokenCookieName?: string;
     clientCredentials?: RequestCredentials;
     clientAutoRefresh?: boolean;
+    transportMode?: WayAuthTransportMode;
+    endpointOriginGuard?: WayAuthEndpointOriginGuard;
+    transportEndpoints?: Partial<Pick<WayAuthEndpoints, "signup" | "login" | "refresh" | "logout" | "me">>;
     signupSecret?: string;
     middleware?: Partial<WayAuthNextMiddlewareOptions>;
     hydrationStrategy?: HydrationStrategy;
@@ -58,6 +63,7 @@ export declare function createWayAuthNext(options?: WayAuthNextOptions): {
         refresh: () => Promise<import("./types").WayAuthTokenResponse>;
         logout: () => Promise<import("./types").WayAuthLogoutResponse>;
         bootstrapSession: () => Promise<WayAuthBootstrapResult>;
+        isPublicAuthRoute: (pathname: string) => boolean;
         startSessionKeepAlive: (options?: {
             intervalMs?: number;
         }) => () => void;

@@ -200,6 +200,26 @@ SDK highlights:
 - `auth.client.bootstrapSession()` and `auth.server.getSession()`
 - `auth.client.startSessionKeepAlive()` for long-lived browser tabs
 
+## Release Notes (2026-02-23)
+
+- Refresh-cookie defaults are now optimized for Next.js proxy mode.
+- Service default remains `REFRESH_COOKIE_MODE="proxy"`:
+  - host-only refresh cookie (`Domain` unset)
+  - `SameSite=Lax` by default
+- `/api/v1/refresh` now returns stable 401 codes:
+  - `missing_refresh_token`
+  - `expired_refresh_token`
+  - `invalid_refresh_token`
+
+Legacy direct cross-origin browser clients must opt in explicitly:
+
+```bash
+REFRESH_COOKIE_MODE="cross-site"
+```
+
+If you are migrating older consumer apps, see:
+- `/Users/kurtik/code/public/way-my_auth_service/MIGRATION_GUIDE.md`
+
 ## CORS Notes
 
 If your frontend runs on a different origin, add it in the CORS admin UI at `/admin/cors`. The origin list is stored in the database and can be updated without redeploying.

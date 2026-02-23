@@ -218,4 +218,198 @@ describe("next adapter", () => {
       status: 401,
     });
   });
+
+  it("uses same-origin transport endpoints in proxy mode even when discovery returns absolute upstream URLs", async () => {
+    const requests = [];
+    const auth = createWayAuthNext({
+      baseUrl: "https://app.example.com",
+      transportMode: "proxy",
+      fetch: createRouteFetch({
+        "https://app.example.com/.well-known/way-auth-configuration": async () =>
+          jsonResponse({
+            version: "1",
+            issuer: "https://auth.example.com",
+            audience: "way-clients",
+            jwks_url: "https://auth.example.com/api/v1/jwks",
+            endpoints: {
+              signup: "https://auth.example.com/api/v1/signup",
+              login: "https://auth.example.com/api/v1/login",
+              refresh: "https://auth.example.com/api/v1/refresh",
+              logout: "https://auth.example.com/api/v1/logout",
+              me: "https://auth.example.com/api/v1/me",
+            },
+          }),
+        "https://app.example.com/api/v1/refresh": async (url) => {
+          requests.push(url);
+          return jsonResponse({
+            accessToken: "proxy_token",
+            tokenType: "Bearer",
+            expiresIn: 900,
+          });
+        },
+        "https://app.example.com/api/v1/me": async (url, init) => {
+          requests.push(url);
+          const authorization = new Headers(init.headers).get("authorization");
+          if (authorization !== "Bearer proxy_token") {
+            return jsonResponse({ error: { code: "invalid_token", message: "Bad token" } }, 401);
+          }
+
+          return jsonResponse({
+            user: {
+              id: "user_proxy",
+              email: "proxy@example.com",
+            },
+          });
+        },
+      }),
+    });
+
+    const result = await auth.client.bootstrapSession();
+    expect(result.ok).toBe(true);
+    expect(requests).toEqual([
+      "https://app.example.com/api/v1/refresh",
+      "https://app.example.com/api/v1/me",
+    ]);
+  });
+
+  it("warns on endpoint origin mismatch when guard is warn", async () => {
+    const originalWarn = console.warn;
+    const warnings = [];
+    console.warn = (message) => {
+      warnings.push(String(message));
+    };
+
+    try {
+      const auth = createWayAuthNext({
+        baseUrl: "https://app.example.com",
+        discoveryMode: "never",
+        endpointOriginGuard: "warn",
+        endpoints: {
+          refresh: "https://auth.example.com/api/v1/refresh",
+        },
+        fetch: createRouteFetch({
+          "https://auth.example.com/api/v1/refresh": async () =>
+            jsonResponse({
+              accessToken: "token_warn",
+              tokenType: "Bearer",
+              expiresIn: 900,
+            }),
+        }),
+      });
+
+      await auth.client.refresh();
+      expect(warnings.length).toBe(1);
+      expect(warnings[0]).toContain("can break cookie-backed refresh in proxy deployments");
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
+  it("throws on endpoint origin mismatch when guard is error", async () => {
+    const auth = createWayAuthNext({
+      baseUrl: "https://app.example.com",
+      discoveryMode: "never",
+      endpointOriginGuard: "error",
+      endpoints: {
+        refresh: "https://auth.example.com/api/v1/refresh",
+      },
+      fetch: createRouteFetch({
+        "https://auth.example.com/api/v1/refresh": async () =>
+          jsonResponse({
+            accessToken: "token_error",
+            tokenType: "Bearer",
+            expiresIn: 900,
+          }),
+      }),
+    });
+
+    await expect(auth.client.refresh()).rejects.toThrow(
+      "WAY Auth endpoints resolved to origin(s) different from baseUrl origin.",
+    );
+  });
+
+  it("exposes route helper for public auth routes", () => {
+    const auth = createWayAuthNext({
+      baseUrl: "https://auth.example.com",
+      discoveryMode: "never",
+      middleware: {
+        publicPaths: ["/admin/login", "/admin/signup", "/admin/reset-password"],
+      },
+    });
+
+    expect(auth.client.isPublicAuthRoute("/admin/login")).toBe(true);
+    expect(auth.client.isPublicAuthRoute("/admin/reset-password")).toBe(true);
+    expect(auth.client.isPublicAuthRoute("/admin")).toBe(false);
+  });
+
+  it("uses adaptive keep-alive interval by default and respects explicit overrides", async () => {
+    const auth = createWayAuthNext({
+      baseUrl: "https://auth.example.com",
+      discoveryMode: "never",
+      fetch: createRouteFetch({
+        "https://auth.example.com/api/v1/login": async () =>
+          jsonResponse({
+            user: {
+              id: "user_keep_alive",
+              email: "keepalive@example.com",
+            },
+            accessToken: "token_keep_alive",
+            tokenType: "Bearer",
+            expiresIn: 120,
+          }),
+      }),
+    });
+
+    await auth.client.login({
+      email: "keepalive@example.com",
+      password: "StrongPass123!",
+    });
+
+    const originalWindow = globalThis.window;
+    const originalDocument = globalThis.document;
+    let capturedIntervalMs = null;
+    let listener = null;
+
+    globalThis.window = {
+      setInterval: (_fn, ms) => {
+        capturedIntervalMs = ms;
+        return 1;
+      },
+      clearInterval: () => {},
+      location: { protocol: "https:" },
+    };
+    globalThis.document = {
+      visibilityState: "visible",
+      addEventListener: (_eventName, callback) => {
+        listener = callback;
+      },
+      removeEventListener: () => {},
+      cookie: "",
+    };
+
+    try {
+      const stop = auth.client.startSessionKeepAlive();
+      expect(capturedIntervalMs).toBe(60_000);
+      stop();
+
+      capturedIntervalMs = null;
+      const stopWithOverride = auth.client.startSessionKeepAlive({ intervalMs: 12_345 });
+      expect(capturedIntervalMs).toBe(12_345);
+      if (listener) {
+        listener();
+      }
+      stopWithOverride();
+    } finally {
+      if (originalWindow === undefined) {
+        delete globalThis.window;
+      } else {
+        globalThis.window = originalWindow;
+      }
+      if (originalDocument === undefined) {
+        delete globalThis.document;
+      } else {
+        globalThis.document = originalDocument;
+      }
+    }
+  });
 });

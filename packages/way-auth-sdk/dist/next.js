@@ -4,6 +4,17 @@ import { getWayAuthErrorMessage } from "./errors";
 import { createWayAuthGuard, WayAuthTokenVerificationError } from "./server";
 const DEFAULT_ACCESS_TOKEN_COOKIE_NAME = "way_access_token";
 const DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS = 15 * 60;
+const DEFAULT_TRANSPORT_MODE = "direct";
+const DEFAULT_ENDPOINT_ORIGIN_GUARD = "warn";
+const DEFAULT_PROXY_TRANSPORT_ENDPOINTS = {
+    signup: "/api/v1/signup",
+    login: "/api/v1/login",
+    refresh: "/api/v1/refresh",
+    logout: "/api/v1/logout",
+    me: "/api/v1/me",
+};
+const KEEP_ALIVE_MIN_INTERVAL_MS = 60_000;
+const KEEP_ALIVE_MAX_INTERVAL_MS = 4 * 60_000;
 const DEFAULT_MIDDLEWARE_OPTIONS = {
     adminPrefix: "/admin",
     publicPaths: ["/admin/login", "/admin/signup"],
@@ -139,9 +150,45 @@ function resolveMiddlewareOptions(options) {
         matcher: [`${adminPrefix}/:path*`],
     };
 }
+function normalizeComparableOrigin(value) {
+    try {
+        return new URL(value).origin;
+    }
+    catch {
+        return null;
+    }
+}
+function detectEndpointOriginMismatches(baseUrl, endpoints) {
+    const baseOrigin = normalizeComparableOrigin(baseUrl);
+    if (!baseOrigin) {
+        return [];
+    }
+    const mismatches = [];
+    const entries = Object.entries(endpoints);
+    for (const [endpoint, value] of entries) {
+        const endpointOrigin = normalizeComparableOrigin(value);
+        if (!endpointOrigin || endpointOrigin === baseOrigin) {
+            continue;
+        }
+        mismatches.push({ endpoint, origin: endpointOrigin });
+    }
+    return mismatches;
+}
+function buildProxyTransportEndpoints(overrides) {
+    return {
+        ...DEFAULT_PROXY_TRANSPORT_ENDPOINTS,
+        ...(overrides ?? {}),
+    };
+}
+function resolveAdaptiveKeepAliveIntervalMs(accessTokenTtlSeconds) {
+    const derived = Math.floor((accessTokenTtlSeconds * 1_000) / 2);
+    return Math.max(KEEP_ALIVE_MIN_INTERVAL_MS, Math.min(KEEP_ALIVE_MAX_INTERVAL_MS, derived));
+}
 export function createWayAuthNext(options = {}) {
     const fetchImpl = options.fetch ?? fetch;
     const accessTokenCookieName = options.accessTokenCookieName ?? DEFAULT_ACCESS_TOKEN_COOKIE_NAME;
+    const transportMode = options.transportMode ?? DEFAULT_TRANSPORT_MODE;
+    const endpointOriginGuard = options.endpointOriginGuard ?? DEFAULT_ENDPOINT_ORIGIN_GUARD;
     const middlewareOptions = resolveMiddlewareOptions(options);
     const defaultHydrationStrategy = options.hydrationStrategy ?? "best-effort";
     const tokenStore = createInMemoryTokenStore();
@@ -152,17 +199,59 @@ export function createWayAuthNext(options = {}) {
     });
     let clientPromise = null;
     let guardPromise = null;
+    let runtimeConfigPromise = null;
+    let hasWarnedOnEndpointOriginMismatch = false;
+    async function getRuntimeConfig() {
+        if (!runtimeConfigPromise) {
+            runtimeConfigPromise = (async () => {
+                const resolved = await resolvedConfigPromise;
+                const mismatches = detectEndpointOriginMismatches(resolved.baseUrl, resolved.endpoints);
+                if (endpointOriginGuard !== "off" && mismatches.length > 0) {
+                    const mismatchDescription = mismatches.map((item) => `${item.endpoint}:${item.origin}`).join(", ");
+                    const message = `WAY Auth endpoints resolved to origin(s) different from baseUrl origin. ` +
+                        `This can break cookie-backed refresh in proxy deployments. ` +
+                        `baseUrl=${resolved.baseUrl}; mismatches=[${mismatchDescription}]`;
+                    if (endpointOriginGuard === "error") {
+                        throw new Error(message);
+                    }
+                    if (!hasWarnedOnEndpointOriginMismatch) {
+                        hasWarnedOnEndpointOriginMismatch = true;
+                        console.warn(message);
+                    }
+                }
+                const resolvedClientEndpoints = {
+                    signup: resolved.endpoints.signup,
+                    login: resolved.endpoints.login,
+                    refresh: resolved.endpoints.refresh,
+                    logout: resolved.endpoints.logout,
+                    me: resolved.endpoints.me,
+                };
+                const clientEndpoints = transportMode === "proxy"
+                    ? buildProxyTransportEndpoints(options.transportEndpoints)
+                    : {
+                        ...resolvedClientEndpoints,
+                        ...(options.transportEndpoints ?? {}),
+                    };
+                return {
+                    resolved,
+                    clientEndpoints,
+                };
+            })();
+        }
+        return runtimeConfigPromise;
+    }
     async function getClient() {
         if (!clientPromise) {
             clientPromise = (async () => {
-                const resolved = await resolvedConfigPromise;
+                const runtimeConfig = await getRuntimeConfig();
+                const resolved = runtimeConfig.resolved;
                 const clientOptions = {
                     baseUrl: resolved.baseUrl,
                     fetch: fetchImpl,
                     credentials: options.clientCredentials ?? "include",
                     autoRefresh: options.clientAutoRefresh ?? true,
                     tokenStore,
-                    endpoints: resolved.endpoints,
+                    endpoints: runtimeConfig.clientEndpoints,
                     signupSecret: options.signupSecret,
                 };
                 return createWayAuthClient(clientOptions);
@@ -173,7 +262,8 @@ export function createWayAuthNext(options = {}) {
     async function getGuard() {
         if (!guardPromise) {
             guardPromise = (async () => {
-                const resolved = await resolvedConfigPromise;
+                const runtimeConfig = await getRuntimeConfig();
+                const resolved = runtimeConfig.resolved;
                 return createWayAuthGuard({
                     jwksUrl: resolved.jwksUrl,
                     issuer: resolved.issuer,
@@ -193,9 +283,9 @@ export function createWayAuthNext(options = {}) {
         clearAccessTokenCookie(accessTokenCookieName);
     }
     async function fetchUserFromMe(accessToken) {
-        const resolved = await resolvedConfigPromise;
+        const runtimeConfig = await getRuntimeConfig();
         try {
-            const response = await fetchImpl(resolved.endpoints.me, {
+            const response = await fetchImpl(runtimeConfig.clientEndpoints.me, {
                 method: "GET",
                 headers: {
                     authorization: `Bearer ${accessToken}`,
@@ -357,11 +447,14 @@ export function createWayAuthNext(options = {}) {
             };
         }
     }
+    function isPublicAuthRoute(pathname) {
+        return middlewareOptions.publicPaths.includes(normalizePath(pathname));
+    }
     function startSessionKeepAlive(options = {}) {
         if (typeof window === "undefined" || typeof document === "undefined") {
             return () => { };
         }
-        const intervalMs = options.intervalMs ?? 5 * 60 * 1_000;
+        const intervalMs = options.intervalMs ?? resolveAdaptiveKeepAliveIntervalMs(accessTokenCookieMaxAgeSeconds);
         const runRefresh = () => {
             void refresh().catch(() => {
                 // Keep-alive should be best-effort and never throw in global listeners.
@@ -388,6 +481,7 @@ export function createWayAuthNext(options = {}) {
             refresh,
             logout,
             bootstrapSession,
+            isPublicAuthRoute,
             startSessionKeepAlive,
         },
         server: {

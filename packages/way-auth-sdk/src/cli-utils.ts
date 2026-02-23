@@ -15,6 +15,7 @@ export type ConsumerConfig = {
 export type NextSetupOptions = {
   adminPrefix?: string;
   publicPaths?: string[];
+  transportMode?: "direct" | "proxy";
 };
 
 function normalizePath(path: string): string {
@@ -140,10 +141,11 @@ function buildMiddlewareConfigBlock(options: NextSetupOptions): string {
 
 export function buildNextAuthFile(options: NextSetupOptions = {}): string {
   const middlewareBlock = buildMiddlewareConfigBlock(options);
-  const body =
-    middlewareBlock.length > 0
-      ? `export const auth = createWayAuthNext({\n${middlewareBlock}});\n`
-      : "export const auth = createWayAuthNext();\n";
+  const transportModeBlock = options.transportMode === "proxy" ? '  transportMode: "proxy",\n' : "";
+  const hasConfig = middlewareBlock.length > 0 || transportModeBlock.length > 0;
+  const body = hasConfig
+    ? `export const auth = createWayAuthNext({\n${transportModeBlock}${middlewareBlock}});\n`
+    : "export const auth = createWayAuthNext();\n";
 
   return [
     'import { createWayAuthNext } from "@way/auth-sdk/next";',
@@ -170,8 +172,122 @@ export function buildNextMiddlewareFile(): string {
 }
 
 export function buildNextEnvUpdates(baseUrl: string): Record<string, string> {
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   return {
-    WAY_AUTH_BASE_URL: normalizeBaseUrl(baseUrl),
+    WAY_AUTH_BASE_URL: normalizedBaseUrl,
+    NEXT_PUBLIC_WAY_AUTH_BASE_URL: normalizedBaseUrl,
+  };
+}
+
+export type WayAuthNextRewrite = {
+  source: string;
+  destination: string;
+};
+
+export type NextConfigPatchResult =
+  | {
+      status: "updated" | "unchanged";
+      content: string;
+      snippet: string;
+    }
+  | {
+      status: "unsupported";
+      content: string;
+      snippet: string;
+      reason: string;
+    };
+
+export function buildNextProxyRewrites(baseUrl: string): WayAuthNextRewrite[] {
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+  return [
+    {
+      source: "/.well-known/way-auth-configuration",
+      destination: `${normalizedBaseUrl}/.well-known/way-auth-configuration`,
+    },
+    {
+      source: "/api/v1/:path*",
+      destination: `${normalizedBaseUrl}/api/v1/:path*`,
+    },
+  ];
+}
+
+export function buildNextRewritesSnippet(baseUrl: string): string {
+  const rewrites = buildNextProxyRewrites(baseUrl);
+  return [
+    "async rewrites() {",
+    "  return [",
+    ...rewrites.map(
+      (rewrite) =>
+        `    { source: "${rewrite.source}", destination: "${rewrite.destination}" },`,
+    ),
+    "  ];",
+    "},",
+  ].join("\n");
+}
+
+function hasWayAuthProxyRewrites(content: string): boolean {
+  return (
+    content.includes("/.well-known/way-auth-configuration") &&
+    content.includes("/api/v1/:path*")
+  );
+}
+
+function appendPropertyBlockToObjectBody(objectBody: string, propertyBlock: string): string {
+  const trimmed = objectBody.replace(/\s*$/, "");
+  if (!trimmed) {
+    return `\n${propertyBlock}\n`;
+  }
+
+  const needsComma = !trimmed.endsWith(",");
+  return `${trimmed}${needsComma ? "," : ""}\n${propertyBlock}\n`;
+}
+
+export function patchNextConfigWithProxyRewrites(existingContent: string, baseUrl: string): NextConfigPatchResult {
+  const snippet = buildNextRewritesSnippet(baseUrl);
+  if (hasWayAuthProxyRewrites(existingContent)) {
+    return {
+      status: "unchanged",
+      content: existingContent,
+      snippet,
+    };
+  }
+
+  if (existingContent.includes("rewrites:") || existingContent.includes("rewrites(")) {
+    return {
+      status: "unsupported",
+      content: existingContent,
+      snippet,
+      reason: "next.config already defines rewrites; automatic merge is not supported.",
+    };
+  }
+
+  const constConfigPattern = /(const\s+nextConfig(?:\s*:\s*[^=]+)?\s*=\s*{)([\s\S]*?)(\n};?)/m;
+  const constMatch = constConfigPattern.exec(existingContent);
+  if (constMatch) {
+    const nextBody = appendPropertyBlockToObjectBody(constMatch[2], `  ${snippet.replace(/\n/g, "\n  ")}`);
+    return {
+      status: "updated",
+      content: existingContent.replace(constConfigPattern, `${constMatch[1]}${nextBody}${constMatch[3]}`),
+      snippet,
+    };
+  }
+
+  const exportDefaultPattern = /(export\s+default\s*{)([\s\S]*?)(\n};?)/m;
+  const exportMatch = exportDefaultPattern.exec(existingContent);
+  if (exportMatch) {
+    const nextBody = appendPropertyBlockToObjectBody(exportMatch[2], `  ${snippet.replace(/\n/g, "\n  ")}`);
+    return {
+      status: "updated",
+      content: existingContent.replace(exportDefaultPattern, `${exportMatch[1]}${nextBody}${exportMatch[3]}`),
+      snippet,
+    };
+  }
+
+  return {
+    status: "unsupported",
+    content: existingContent,
+    snippet,
+    reason: "Unsupported next.config format for automatic rewrite patching.",
   };
 }
 
@@ -184,6 +300,12 @@ export function buildNextSetupGuide(input: {
   envPath: string;
   authFilePath: string;
   middlewarePath: string;
+  transportMode: "direct" | "proxy";
 }): string {
-  return `# WAY Auth Next.js Setup\n\n## Fastest Next.js setup\n\n1. Install SDK:\n\n\`\`\`bash\nbun add @way/auth-sdk\n\`\`\`\n\n2. Run setup:\n\n\`\`\`bash\nbunx way-auth-setup --framework next --minimal\n\`\`\`\n\n3. Ensure this env key exists in \`${input.envPath}\`:\n\n\`\`\`bash\nWAY_AUTH_BASE_URL="${input.baseUrl}"\n\`\`\`\n\nNo additional WAY Auth env vars are required for baseline Next.js integration.\n\n## What was generated\n\n1. \`${input.authFilePath}\`\n- Creates \`createWayAuthNext()\` singleton.\n- Exports middleware and matcher bindings.\n\n2. \`${input.middlewarePath}\`\n- Re-exports SDK middleware and matcher.\n\n3. \`${input.envPath}\`\n- Merged/updated with \`WAY_AUTH_BASE_URL\`.\n\n## Runtime mental model\n\n1. Middleware checks protected admin routes.\n2. Client methods (\`auth.client.*\`) manage login/signup/logout/bootstrap.\n3. Server helpers (\`auth.server.*\`) validate session from access-token cookie.\n4. SDK resolves issuer/audience/JWKS/endpoints using discovery at:\n- \`/.well-known/way-auth-configuration\`\n\n## Usage snippets\n\n### Client login\n\n\`\`\`ts\nimport { auth } from "@/lib/auth";\n\nawait auth.client.login({ email: "demo@example.com", password: "password" });\n\`\`\`\n\n### Client bootstrap\n\n\`\`\`ts\nconst result = await auth.client.bootstrapSession();\nif (!result.ok) {\n  console.log(result.error.message);\n}\n\`\`\`\n\n### Server session\n\n\`\`\`ts\nimport { auth } from "@/lib/auth";\n\nconst session = await auth.server.getSession(request);\n\`\`\`\n\n## Troubleshooting\n\n1. Redirect loops on admin routes:\n- Confirm \`middleware.ts\` exports SDK middleware.\n- Confirm access token cookie is not blocked by browser policy.\n\n2. Discovery/config errors:\n- Verify \`${input.baseUrl}/.well-known/way-auth-configuration\` is reachable.\n\n3. Session returns null server-side:\n- User may be logged out, token expired, or cookie not present.\n\n## Migration notes (from custom wrappers)\n\n1. Delete custom auth config/constants/client/server wrapper files.\n2. Replace middleware logic with generated \`middleware.ts\`.\n3. Replace direct client wrapper calls with \`auth.client.*\`.\n4. Replace server wrapper calls with \`auth.server.getSession/requireSession\`.\n`;
+  const transportModeNote =
+    input.transportMode === "proxy"
+      ? "- Generated in proxy transport mode. Client transport defaults to same-origin `/api/v1/*`.\n- Setup attempts to patch `next.config.*` rewrites for `/.well-known/way-auth-configuration` and `/api/v1/:path*`.\n- If auto-merge is unsafe, setup writes `way-auth-next-rewrites.snippet.txt` and continues.\n"
+      : "- Generated in direct transport mode. Discovery-resolved endpoint URLs are used by default.\n- This mode is backward-compatible but less robust for browser cookie refresh across origins.\n";
+
+  return `# WAY Auth Next.js Setup\n\n## Fastest Next.js setup\n\n1. Install SDK:\n\n\`\`\`bash\nbun add @way/auth-sdk\n\`\`\`\n\n2. Run setup:\n\n\`\`\`bash\nbunx way-auth-setup --framework next --minimal --transport-mode ${input.transportMode}\n\`\`\`\n\n3. Ensure these env keys exist in \`${input.envPath}\`:\n\n\`\`\`bash\nWAY_AUTH_BASE_URL="${input.baseUrl}"\nNEXT_PUBLIC_WAY_AUTH_BASE_URL="${input.baseUrl}"\n\`\`\`\n\nNo additional WAY Auth env vars are required for baseline Next.js integration.\n\n## What was generated\n\n1. \`${input.authFilePath}\`\n- Creates \`createWayAuthNext()\` singleton.\n- Exports middleware and matcher bindings.\n\n2. \`${input.middlewarePath}\`\n- Re-exports SDK middleware and matcher.\n\n3. \`${input.envPath}\`\n- Merged/updated with \`WAY_AUTH_BASE_URL\` and \`NEXT_PUBLIC_WAY_AUTH_BASE_URL\`.\n\n4. Transport mode notes:\n${transportModeNote}\n## Runtime mental model\n\n1. Middleware checks protected admin routes.\n2. Client methods (\`auth.client.*\`) manage login/signup/logout/bootstrap.\n3. Server helpers (\`auth.server.*\`) validate session from access-token cookie.\n4. SDK resolves issuer/audience/JWKS/endpoints using discovery at:\n- \`/.well-known/way-auth-configuration\`\n\n## Usage snippets\n\n### Client login\n\n\`\`\`ts\nimport { auth } from "@/lib/auth";\n\nawait auth.client.login({ email: "demo@example.com", password: "password" });\n\`\`\`\n\n### Route-aware bootstrap\n\n\`\`\`ts\nconst pathname = window.location.pathname;\nif (!auth.client.isPublicAuthRoute(pathname)) {\n  const result = await auth.client.bootstrapSession();\n  if (!result.ok) {\n    console.warn(result.error.message);\n  }\n}\n\n// Adaptive by default. Pass intervalMs for explicit control.\nconst stopKeepAlive = auth.client.startSessionKeepAlive();\n\`\`\`\n\n### Server session\n\n\`\`\`ts\nimport { auth } from "@/lib/auth";\n\nconst session = await auth.server.getSession(request);\n\`\`\`\n\n## Troubleshooting\n\n1. Redirect loops on admin routes:\n- Confirm \`middleware.ts\` exports SDK middleware.\n- Confirm access token cookie is not blocked by browser policy.\n\n2. Discovery/config errors:\n- Verify \`${input.baseUrl}/.well-known/way-auth-configuration\` is reachable.\n\n3. Endpoint-origin mismatch warnings:\n- Default behavior is \`endpointOriginGuard: "warn"\`.\n- Set \`endpointOriginGuard: "error"\` to fail fast if resolved endpoint origins diverge from base URL origin.\n\n4. Session returns null server-side:\n- User may be logged out, token expired, or cookie not present.\n\n## Migration notes (from custom wrappers)\n\n1. Delete custom auth config/constants/client/server wrapper files.\n2. Replace middleware logic with generated \`middleware.ts\`.\n3. Replace direct client wrapper calls with \`auth.client.*\`.\n4. Replace server wrapper calls with \`auth.server.getSession/requireSession\`.\n`;
 }
